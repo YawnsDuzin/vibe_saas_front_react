@@ -203,7 +203,15 @@ def create_post(
     post = post_service.create_post(post_data, current_user.id)
 
     return {
-        **post.__dict__,
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "slug": post.slug,
+        "view_count": post.view_count,
+        "is_published": post.is_published,
+        "is_pinned": post.is_pinned,
+        "created_at": post.created_at,
+        "updated_at": post.updated_at,
         "author": post.author,
         "category": post.category,
         "comment_count": 0
@@ -258,7 +266,15 @@ def get_post(
     post_service.increment_view_count(post_id)
 
     return {
-        **post.__dict__,
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "slug": post.slug,
+        "view_count": post.view_count,
+        "is_published": post.is_published,
+        "is_pinned": post.is_pinned,
+        "created_at": post.created_at,
+        "updated_at": post.updated_at,
         "author": post.author,
         "category": post.category,
         "comment_count": post_service.get_comment_count(post_id)
@@ -297,7 +313,15 @@ def update_post(
     post = post_service.update_post(post_id, post_data, current_user)
 
     return {
-        **post.__dict__,
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "slug": post.slug,
+        "view_count": post.view_count,
+        "is_published": post.is_published,
+        "is_pinned": post.is_pinned,
+        "created_at": post.created_at,
+        "updated_at": post.updated_at,
         "author": post.author,
         "category": post.category,
         "comment_count": post_service.get_comment_count(post_id)

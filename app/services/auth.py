@@ -102,9 +102,9 @@ class AuthService:
         user.last_login = datetime.utcnow()
         self.db.commit()
 
-        # 토큰 생성
+        # 토큰 생성 (sub는 반드시 문자열이어야 함)
         token_data = {
-            "sub": user.id,
+            "sub": str(user.id),
             "username": user.username,
             "email": user.email,
             "role": user.role.value
@@ -166,9 +166,9 @@ class AuthService:
                 detail="비활성화된 계정입니다."
             )
 
-        # 새 토큰 생성
+        # 새 토큰 생성 (sub는 반드시 문자열이어야 함)
         token_data = {
-            "sub": user.id,
+            "sub": str(user.id),
             "username": user.username,
             "email": user.email,
             "role": user.role.value

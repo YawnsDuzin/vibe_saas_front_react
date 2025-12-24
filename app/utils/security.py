@@ -174,13 +174,16 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
         ```
     """
     try:
+        print(f"[DEBUG decode_token] Using secret: {settings.jwt_secret_key[:10]}...")
+        print(f"[DEBUG decode_token] Using algorithm: {settings.jwt_algorithm}")
         payload = jwt.decode(
             token,
             settings.jwt_secret_key,
             algorithms=[settings.jwt_algorithm]
         )
         return payload
-    except JWTError:
+    except JWTError as e:
+        print(f"[DEBUG decode_token] JWTError: {e}")
         return None
 
 

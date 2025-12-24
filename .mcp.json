@@ -1,0 +1,28 @@
+{
+    "mcpServers": {
+      "context7": {
+        "type": "http",
+        "url": "https://mcp.context7.com/mcp"
+      },
+      "sequential-thinking": {
+        "type": "stdio",
+        "command": "cmd",
+        "args": [
+          "/c",
+          "npx",
+          "@modelcontextprotocol/server-sequential-thinking"
+        ],
+        "env": {}
+      },
+      "playwright": {
+        "type": "stdio",
+        "command": "cmd",
+        "args": [
+          "/c",
+          "npx",
+          "@playwright/mcp"
+        ],
+        "env": {}
+      }
+    }
+  }

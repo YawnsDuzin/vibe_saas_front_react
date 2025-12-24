@@ -63,6 +63,8 @@ async def get_current_user(
             return {"username": user.username}
         ```
     """
+    print(f"[DEBUG] Received token: {token[:50] if token else 'None'}...")
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="인증 정보를 확인할 수 없습니다.",
@@ -71,17 +73,21 @@ async def get_current_user(
 
     # 토큰 디코딩
     payload = decode_token(token)
+    print(f"[DEBUG] Decoded payload: {payload}")
     if payload is None:
+        print("[DEBUG] Token decode failed")
         raise credentials_exception
 
     # 토큰 타입 확인
     if payload.get("type") != "access":
+        print(f"[DEBUG] Invalid token type: {payload.get('type')}")
         raise credentials_exception
 
-    # 사용자 ID 추출
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    # 사용자 ID 추출 (sub는 문자열이므로 정수로 변환)
+    user_id_str = payload.get("sub")
+    if user_id_str is None:
         raise credentials_exception
+    user_id = int(user_id_str)
 
     # 데이터베이스에서 사용자 조회
     user = db.query(User).filter(User.id == user_id).first()
@@ -200,11 +206,11 @@ async def get_optional_current_user(
     if payload.get("type") != "access":
         return None
 
-    user_id = payload.get("sub")
-    if user_id is None:
+    user_id_str = payload.get("sub")
+    if user_id_str is None:
         return None
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == int(user_id_str)).first()
     return user
 
 
