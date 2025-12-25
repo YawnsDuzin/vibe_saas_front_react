@@ -10,12 +10,14 @@ SQLAlchemy ORM 모델을 정의하는 패키지입니다.
 - Comment: 댓글
 - Theme: 사용자 테마 설정
 - Menu: 메뉴 구조
+- File: 업로드된 파일
 """
 
 from app.models.user import User
 from app.models.post import Post, Comment, Category
 from app.models.theme import UserTheme
 from app.models.menu import Menu
+from app.models.file import File
 
 __all__ = [
     "User",
@@ -24,4 +26,5 @@ __all__ = [
     "Category",
     "UserTheme",
     "Menu",
+    "File",
 ]

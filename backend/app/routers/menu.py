@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User, UserRole
 from app.models.menu import Menu
-from app.schemas.menu import MenuCreate, MenuUpdate, MenuResponse, MenuTreeResponse
+from app.schemas.menu import MenuCreate, MenuUpdate, MenuResponse, MenuTreeResponse, MenuReorderRequest
 from app.dependencies.auth import (
     get_current_active_user,
     get_current_admin_user,
@@ -169,6 +169,42 @@ def create_menu(
     db.refresh(menu)
 
     return build_menu_dict(menu)
+
+
+@router.put(
+    "/reorder",
+    response_model=MenuTreeResponse,
+    summary="메뉴 순서 일괄 변경",
+    description="메뉴 순서를 일괄 변경합니다. (관리자 전용)"
+)
+def reorder_menus(
+    reorder_data: MenuReorderRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """
+    메뉴 순서 일괄 변경 (관리자 전용)
+
+    여러 메뉴의 순서와 부모를 한 번에 변경합니다.
+    드래그 앤 드롭으로 메뉴 순서를 변경할 때 사용합니다.
+
+    - **items**: 변경할 메뉴 목록 (id, order, parent_id)
+
+    Returns:
+        변경 후 메뉴 트리
+    """
+    for item in reorder_data.items:
+        menu = db.query(Menu).filter(Menu.id == item.id).first()
+        if menu:
+            menu.order = item.order
+            if item.parent_id is not None:
+                menu.parent_id = item.parent_id if item.parent_id != 0 else None
+
+    db.commit()
+
+    # 변경된 메뉴 트리 반환
+    menu_tree = get_menu_tree(db, current_user)
+    return MenuTreeResponse(menus=menu_tree)
 
 
 @router.put(

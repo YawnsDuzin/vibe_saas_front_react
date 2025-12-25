@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Search, MoreHorizontal, Eye, EyeOff, Pin, PinOff, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -202,11 +201,11 @@ export default function AdminPostsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/posts/${post.id}`} target="_blank">
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                게시글 보기
-                              </Link>
+                            <DropdownMenuItem
+                              onClick={() => window.open(`/posts/${post.id}`, '_blank')}
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              게시글 보기
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleTogglePublished(post)}>

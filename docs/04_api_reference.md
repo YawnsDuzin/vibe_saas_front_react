@@ -415,6 +415,127 @@ password: string
 
 ---
 
+## 파일 API
+
+### GET /files/storage-info
+
+스토리지 정보를 조회합니다.
+
+**Response (200):**
+```json
+{
+    "storage_type": "local",
+    "max_file_size": 10485760,
+    "allowed_types": ["image/jpeg", "image/png", "image/gif", "application/pdf"],
+    "allowed_extensions": ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx"]
+}
+```
+
+---
+
+### POST /files/upload
+
+파일을 업로드합니다.
+
+**Request (multipart/form-data):**
+- `file`: File (required)
+- `folder`: string (optional)
+- `alt_text`: string (optional)
+- `description`: string (optional)
+
+**Response (201):**
+```json
+{
+    "id": "integer",
+    "filename": "string",
+    "url": "string",
+    "content_type": "string",
+    "size": "integer",
+    "size_formatted": "string"
+}
+```
+
+---
+
+### POST /files/upload-multiple
+
+여러 파일을 업로드합니다.
+
+**Request (multipart/form-data):**
+- `files`: File[] (required)
+- `folder`: string (optional)
+
+**Response (201):** FileUploadResponse[]
+
+---
+
+### GET /files/
+
+현재 사용자의 파일 목록을 조회합니다.
+
+**Query Parameters:**
+- `page`: integer (default: 1)
+- `size`: integer (default: 20)
+- `content_type`: string (optional, 예: "image/")
+- `folder`: string (optional)
+
+**Response (200):**
+```json
+{
+    "items": "FileResponse[]",
+    "total": "integer",
+    "page": "integer",
+    "size": "integer",
+    "pages": "integer"
+}
+```
+
+---
+
+### GET /files/{file_id}
+
+파일 상세 정보를 조회합니다.
+
+**Response (200):** FileResponse
+
+---
+
+### PATCH /files/{file_id}
+
+파일 메타데이터를 수정합니다.
+
+**Request Body:**
+```json
+{
+    "alt_text": "string (optional)",
+    "description": "string (optional)"
+}
+```
+
+---
+
+### DELETE /files/{file_id}
+
+파일을 삭제합니다.
+
+**Response (204):** No Content
+
+---
+
+### GET /files/admin/all
+
+모든 파일을 조회합니다. (관리자 전용)
+
+**Query Parameters:**
+- `page`: integer (default: 1)
+- `size`: integer (default: 20)
+- `content_type`: string (optional)
+- `uploader_id`: integer (optional)
+
+**Response (200):** FileListResponse
+
+---
+
 ## 에러 응답 형식
 
 모든 에러는 다음 형식으로 반환됩니다:
@@ -491,5 +612,51 @@ password: string
     "created_at": "datetime",
     "updated_at": "datetime | null",
     "replies": "CommentResponse[]"
+}
+```
+
+### FileResponse
+
+```json
+{
+    "id": "integer",
+    "filename": "string",
+    "storage_key": "string",
+    "content_type": "string",
+    "size": "integer",
+    "url": "string",
+    "storage_type": "string",
+    "folder": "string",
+    "alt_text": "string | null",
+    "description": "string | null",
+    "uploader_id": "integer",
+    "created_at": "datetime",
+    "updated_at": "datetime",
+    "extension": "string",
+    "is_image": "boolean",
+    "size_formatted": "string"
+}
+```
+
+### FileListResponse
+
+```json
+{
+    "items": "FileResponse[]",
+    "total": "integer",
+    "page": "integer",
+    "size": "integer",
+    "pages": "integer"
+}
+```
+
+### StorageInfoResponse
+
+```json
+{
+    "storage_type": "string",
+    "max_file_size": "integer",
+    "allowed_types": "string[]",
+    "allowed_extensions": "string[]"
 }
 ```

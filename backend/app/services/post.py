@@ -55,6 +55,18 @@ class PostService:
 
         return query.order_by(Category.order).all()
 
+    def get_category(self, category_id: int) -> Optional[Category]:
+        """
+        ID로 카테고리를 조회합니다.
+
+        Args:
+            category_id: 카테고리 ID
+
+        Returns:
+            Optional[Category]: 카테고리 또는 None
+        """
+        return self.db.query(Category).filter(Category.id == category_id).first()
+
     def create_category(self, name: str, slug: str, description: str = None) -> Category:
         """
         새 카테고리를 생성합니다.
@@ -85,6 +97,92 @@ class PostService:
         self.db.refresh(category)
 
         return category
+
+    def update_category(
+        self,
+        category_id: int,
+        name: str = None,
+        slug: str = None,
+        description: str = None,
+        order: int = None,
+        is_active: bool = None
+    ) -> Category:
+        """
+        카테고리를 수정합니다.
+
+        Args:
+            category_id: 카테고리 ID
+            name: 새 이름
+            slug: 새 슬러그
+            description: 새 설명
+            order: 정렬 순서
+            is_active: 활성화 여부
+
+        Returns:
+            Category: 수정된 카테고리
+        """
+        category = self.get_category(category_id)
+
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="카테고리를 찾을 수 없습니다."
+            )
+
+        # 슬러그 중복 확인 (자신 제외)
+        if slug and slug != category.slug:
+            existing = self.db.query(Category).filter(
+                Category.slug == slug,
+                Category.id != category_id
+            ).first()
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="이미 존재하는 슬러그입니다."
+                )
+            category.slug = slug
+
+        if name is not None:
+            category.name = name
+        if description is not None:
+            category.description = description
+        if order is not None:
+            category.order = order
+        if is_active is not None:
+            category.is_active = is_active
+
+        self.db.commit()
+        self.db.refresh(category)
+
+        return category
+
+    def delete_category(self, category_id: int) -> bool:
+        """
+        카테고리를 삭제합니다.
+
+        Args:
+            category_id: 카테고리 ID
+
+        Returns:
+            bool: 성공 여부
+        """
+        category = self.get_category(category_id)
+
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="카테고리를 찾을 수 없습니다."
+            )
+
+        # 해당 카테고리를 사용하는 게시글의 category_id를 null로 설정
+        self.db.query(Post).filter(Post.category_id == category_id).update(
+            {Post.category_id: None}
+        )
+
+        self.db.delete(category)
+        self.db.commit()
+
+        return True
 
     # ===========================================
     # Post Methods

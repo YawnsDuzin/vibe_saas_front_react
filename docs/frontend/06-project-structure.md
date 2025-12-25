@@ -19,8 +19,14 @@ frontend/
 │   │   │   │   ├── page.tsx         # 목록
 │   │   │   │   ├── new/page.tsx     # 작성
 │   │   │   │   └── [id]/page.tsx    # 상세
+│   │   │   ├── files/page.tsx       # 내 파일 관리
 │   │   │   ├── users/page.tsx       # 사용자 관리
 │   │   │   └── settings/page.tsx    # 설정
+│   │   ├── admin/                   # 관리자 페이지
+│   │   │   ├── users/page.tsx       # 사용자 관리
+│   │   │   ├── posts/page.tsx       # 게시글 관리
+│   │   │   ├── menus/page.tsx       # 메뉴 관리
+│   │   │   └── files/page.tsx       # 파일 관리
 │   │   ├── layout.tsx               # 루트 레이아웃
 │   │   ├── page.tsx                 # 홈페이지
 │   │   └── globals.css              # 전역 스타일
@@ -32,13 +38,32 @@ frontend/
 │   │   │   ├── Sidebar.tsx          # 사이드바
 │   │   │   └── index.ts             # 내보내기
 │   │   └── ui/                      # UI 컴포넌트 (shadcn/ui)
+│   │       ├── button.tsx           # 버튼
+│   │       ├── card.tsx             # 카드
+│   │       ├── dialog.tsx           # 다이얼로그
+│   │       ├── file-upload.tsx      # 파일 업로드 컴포넌트
+│   │       └── ...                  # 기타 UI 컴포넌트
+│   │
+│   ├── lib/                         # 유틸리티 및 API 클라이언트
+│   │   ├── api/                     # API 클라이언트 모듈
+│   │   │   ├── client.ts            # 기본 HTTP 클라이언트, 파일 업로드
+│   │   │   ├── auth.ts              # 인증 API
+│   │   │   ├── posts.ts             # 게시글 API
+│   │   │   ├── users.ts             # 사용자 API
+│   │   │   ├── files.ts             # 파일 API
+│   │   │   ├── menu.ts              # 메뉴 API
+│   │   │   ├── categories.ts        # 카테고리 API
+│   │   │   ├── dashboard.ts         # 대시보드 API
+│   │   │   └── index.ts             # 내보내기
+│   │   └── utils.ts                 # 유틸리티 함수 (cn)
 │   │
 │   ├── stores/                      # 상태 관리 (Zustand)
 │   │   ├── authStore.ts             # 인증 상태
-│   │   └── themeStore.ts            # 테마 상태
+│   │   ├── themeStore.ts            # 테마 상태
+│   │   └── menuStore.ts             # 메뉴 상태
 │   │
 │   └── types/                       # TypeScript 타입
-│       └── index.ts                 # 타입 정의
+│       └── index.ts                 # 타입 정의 (User, Post, File 등)
 │
 ├── middleware.ts                    # Next.js 미들웨어
 ├── package.json                     # 프로젝트 설정

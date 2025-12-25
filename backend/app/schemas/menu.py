@@ -95,6 +95,18 @@ class MenuResponse(MenuBase):
 MenuResponse.model_rebuild()
 
 
+class MenuOrderItem(BaseModel):
+    """메뉴 순서 항목"""
+    id: int = Field(..., description="메뉴 ID")
+    order: int = Field(..., description="새로운 순서")
+    parent_id: Optional[int] = Field(None, description="부모 메뉴 ID (변경 시)")
+
+
+class MenuReorderRequest(BaseModel):
+    """메뉴 순서 일괄 변경 요청"""
+    items: List[MenuOrderItem] = Field(..., description="변경할 메뉴 목록")
+
+
 class MenuTreeResponse(BaseModel):
     """전체 메뉴 트리 응답"""
     menus: List[MenuResponse] = Field(..., description="최상위 메뉴 목록")

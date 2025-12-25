@@ -7,21 +7,44 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { postsApi } from '@/lib/api';
-import type { Post, PostListResponse } from '@/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { postsApi, categoriesApi } from '@/lib/api';
+import type { Post, PostListResponse, Category } from '@/types';
 
 export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await categoriesApi.getList();
+      setCategories(data);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    }
+  };
 
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const data: PostListResponse = await postsApi.getList({ page, size: 10, search });
+      const data: PostListResponse = await postsApi.getList({
+        page,
+        size: 10,
+        search,
+        category_id: categoryId
+      });
       setPosts(data.items);
       setTotalPages(data.pages);
     } catch (err) {
@@ -32,8 +55,12 @@ export default function PostsPage() {
   };
 
   useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     fetchPosts();
-  }, [page]);
+  }, [page, categoryId]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,9 +83,9 @@ export default function PostsPage() {
         </Link>
       </div>
 
-      {/* 검색 */}
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1 max-w-md">
+      {/* 검색 및 필터 */}
+      <form onSubmit={handleSearch} className="flex gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="게시글 검색..."
@@ -67,6 +94,25 @@ export default function PostsPage() {
             className="pl-10"
           />
         </div>
+        <Select
+          value={categoryId?.toString() || 'all'}
+          onValueChange={(value) => {
+            setCategoryId(value === 'all' ? undefined : parseInt(value));
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="카테고리 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 카테고리</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id.toString()}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button type="submit" variant="secondary">
           검색
         </Button>

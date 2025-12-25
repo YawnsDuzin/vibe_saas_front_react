@@ -22,9 +22,20 @@ class CategoryBase(BaseModel):
     order: int = Field(default=0, description="정렬 순서")
 
 
-class CategoryCreate(CategoryBase):
+class CategoryCreate(BaseModel):
     """카테고리 생성 스키마"""
-    pass
+    name: str = Field(..., max_length=50, description="카테고리 이름", example="공지사항")
+    slug: str = Field(..., max_length=50, description="URL용 슬러그", example="notices")
+    description: Optional[str] = Field(None, max_length=255, description="설명")
+
+
+class CategoryUpdate(BaseModel):
+    """카테고리 수정 스키마"""
+    name: Optional[str] = Field(None, max_length=50, description="카테고리 이름")
+    slug: Optional[str] = Field(None, max_length=50, description="URL용 슬러그")
+    description: Optional[str] = Field(None, max_length=255, description="설명")
+    order: Optional[int] = Field(None, description="정렬 순서")
+    is_active: Optional[bool] = Field(None, description="활성화 여부")
 
 
 class CategoryResponse(CategoryBase):

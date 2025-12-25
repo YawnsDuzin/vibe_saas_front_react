@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useAuthStore } from '@/stores/authStore';
-import { menuApi } from '@/lib/api';
+import { useMenuStore } from '@/stores/menuStore';
 import type { Menu } from '@/types';
 
 interface SidebarProps {
@@ -38,17 +38,6 @@ const iconMap: Record<string, LucideIcon> = {
   'fa-file': FileText,
   'fa-bars': MenuIcon,
 };
-
-// 폴백 메뉴 (API 실패 시)
-const fallbackMenuItems = [
-  { name: '대시보드', url: '/dashboard', icon: 'fa-dashboard', required_role: null },
-  { name: '게시판', url: '/posts', icon: 'fa-list', required_role: null },
-  { name: '내 정보', url: '/profile', icon: 'fa-user', required_role: null },
-  { name: '설정', url: '/settings', icon: 'fa-cog', required_role: null },
-  { name: '관리자', url: '/admin', icon: 'fa-shield', required_role: 'admin', children: [
-    { name: '사용자 관리', url: '/admin/users', icon: 'fa-users', required_role: 'admin' },
-  ]},
-];
 
 function MenuItemComponent({
   menu,
@@ -133,8 +122,7 @@ function MenuItemComponent({
 function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const [menus, setMenus] = useState<Menu[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { menus, isLoading: loading, fetchMenus } = useMenuStore();
   const [expandedMenus, setExpandedMenus] = useState<Set<number>>(new Set());
 
   // 메뉴 펼침/접기 토글
@@ -172,35 +160,11 @@ function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
   };
 
   useEffect(() => {
-    const fetchMenus = async () => {
-      try {
-        const response = await menuApi.getMenuTree();
-        setMenus(response.menus);
-      } catch (error) {
-        console.error('Failed to fetch menus:', error);
-        // 폴백 메뉴 사용
-        const convertToMenu = (item: typeof fallbackMenuItems[0], index: number, parentId: number | null = null): Menu => ({
-          id: parentId ? parentId * 100 + index : index + 1,
-          name: item.name,
-          url: item.url,
-          icon: item.icon,
-          parent_id: parentId,
-          order: index,
-          is_active: true,
-          required_role: item.required_role,
-          created_at: new Date().toISOString(),
-          children: 'children' in item && item.children
-            ? item.children.map((child, childIndex) => convertToMenu(child as typeof fallbackMenuItems[0], childIndex, index + 1))
-            : [],
-        });
-        setMenus(fallbackMenuItems.map((item, index) => convertToMenu(item, index)));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMenus();
-  }, []);
+    // 스토어에 메뉴가 없으면 가져옴
+    if (menus.length === 0) {
+      fetchMenus();
+    }
+  }, [menus.length, fetchMenus]);
 
   // 메뉴 로드 후 현재 경로에 맞게 펼침
   useEffect(() => {

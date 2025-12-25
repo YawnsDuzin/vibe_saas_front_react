@@ -12,13 +12,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { postsApi } from '@/lib/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { postsApi, categoriesApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import type { Post } from '@/types';
+import type { Post, Category } from '@/types';
 
 const postSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요').max(200, '제목은 200자 이내로 입력해주세요'),
   content: z.string().min(1, '내용을 입력해주세요'),
+  category_id: z.number().optional().nullable(),
   is_published: z.boolean(),
 });
 
@@ -31,6 +39,7 @@ export default function EditPostPage() {
   const postId = Number(params.id);
 
   const [post, setPost] = useState<Post | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,10 +47,26 @@ export default function EditPostPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
   });
+
+  const categoryId = watch('category_id');
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoriesApi.getList();
+        setCategories(data);
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -51,6 +76,7 @@ export default function EditPostPage() {
         reset({
           title: postData.title,
           content: postData.content,
+          category_id: postData.category?.id || undefined,
           is_published: postData.is_published,
         });
       } catch (err) {
@@ -66,7 +92,10 @@ export default function EditPostPage() {
   const onSubmit = async (data: PostForm) => {
     setError(null);
     try {
-      await postsApi.update(postId, data);
+      await postsApi.update(postId, {
+        ...data,
+        category_id: data.category_id || undefined,
+      });
       router.push(`/posts/${postId}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : '게시글 수정에 실패했습니다.';
@@ -152,6 +181,29 @@ export default function EditPostPage() {
               {errors.title && (
                 <p className="text-sm text-red-500">{errors.title.message}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">카테고리</Label>
+              <Select
+                value={categoryId?.toString() || 'none'}
+                onValueChange={(value) => {
+                  setValue('category_id', value === 'none' ? undefined : parseInt(value));
+                }}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="카테고리 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">카테고리 없음</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

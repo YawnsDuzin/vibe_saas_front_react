@@ -11,6 +11,7 @@ Features:
 - 대시보드
 - 테마 설정
 - 메뉴 관리
+- 파일 업로드 (다중 스토리지 지원)
 
 Usage:
     uvicorn app.main:app --reload
@@ -22,10 +23,13 @@ ReDoc:
     http://localhost:8000/redoc
 """
 
+import os
+from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 
 from app.config import settings
@@ -90,6 +94,10 @@ app = FastAPI(
 
 ### 📋 메뉴
 - 동적 메뉴 구조
+
+### 📁 파일 업로드
+- 다중 스토리지 지원 (Local, Supabase, Cloudflare R2, AWS S3)
+- 파일 관리 API
     """,
     version=settings.app_version,
     docs_url="/docs",
@@ -180,6 +188,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # API 라우터 등록
 app.include_router(api_router, prefix="/api/v1")
+
+# 로컬 스토리지 사용 시 정적 파일 서빙
+storage_type = os.getenv("STORAGE_TYPE", "local")
+if storage_type == "local":
+    upload_dir = Path(os.getenv("STORAGE_LOCAL_DIR", "uploads"))
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    upload_url = os.getenv("STORAGE_LOCAL_URL", "/uploads")
+    app.mount(upload_url, StaticFiles(directory=str(upload_dir)), name="uploads")
 
 
 # ===========================================

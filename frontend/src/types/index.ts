@@ -212,3 +212,60 @@ export interface MenuUpdate {
 export interface MenuTreeResponse {
   menus: Menu[];
 }
+
+export interface MenuOrderItem {
+  id: number;
+  order: number;
+  parent_id?: number | null;
+}
+
+export interface MenuReorderRequest {
+  items: MenuOrderItem[];
+}
+
+// ===================================
+// File Types
+// ===================================
+
+export interface FileResponse {
+  id: number;
+  filename: string;
+  storage_key: string;
+  content_type: string;
+  size: number;
+  url: string;
+  storage_type: string;
+  folder: string;
+  alt_text: string | null;
+  description: string | null;
+  uploader_id: number;
+  created_at: string;
+  updated_at: string;
+  extension: string;
+  is_image: boolean;
+  size_formatted: string;
+}
+
+export interface FileUploadResponse {
+  id: number;
+  filename: string;
+  url: string;
+  content_type: string;
+  size: number;
+  size_formatted: string;
+}
+
+export interface FileListResponse {
+  items: FileResponse[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+export interface StorageInfoResponse {
+  storage_type: string;
+  max_file_size: number;
+  allowed_types: string[];
+  allowed_extensions: string[];
+}

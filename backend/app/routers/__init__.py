@@ -12,11 +12,12 @@ FastAPI 라우터들을 정의하는 패키지입니다.
 - theme: 테마 설정
 - menu: 메뉴 구조
 - admin: 관리자 전용 (사용자 관리 등)
+- files: 파일 업로드/관리
 """
 
 from fastapi import APIRouter
 
-from app.routers import auth, users, posts, dashboard, theme, menu, admin
+from app.routers import auth, users, posts, dashboard, theme, menu, admin, files
 
 # 메인 API 라우터
 api_router = APIRouter()
@@ -62,4 +63,10 @@ api_router.include_router(
     admin.router,
     prefix="/admin",
     tags=["관리자"]
+)
+
+api_router.include_router(
+    files.router,
+    prefix="/files",
+    tags=["파일"]
 )

@@ -24,6 +24,11 @@ email-validator>=2.1.0
 
 # Utilities
 python-dotenv==1.0.0
+aiofiles>=23.2.1
+
+# File Storage (Optional - install as needed)
+# pip install supabase  # For Supabase storage
+# pip install boto3     # For AWS S3 or Cloudflare R2
 
 # Testing
 pytest==7.4.4

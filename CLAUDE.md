@@ -82,6 +82,7 @@ npm run lint
 1. Copy `backend/.env.example` to `backend/.env`
 2. Configure database type via `DB_TYPE` (postgresql, mysql, mariadb, sqlite)
 3. Set `JWT_SECRET_KEY` and `SECRET_KEY` for production
+4. Configure file storage via `STORAGE_TYPE` (local, supabase, cloudflare, s3)
 
 ### Frontend
 1. Create `frontend/.env.local` for environment variables (optional)
@@ -121,7 +122,7 @@ frontend/src/
 - **Pages** (`app/`): Next.js App Router with route groups
 - **Components** (`components/`): Layout and UI components (shadcn/ui based)
 - **Stores** (`stores/`): Global state with Zustand (auth, theme)
-- **API** (`lib/api/`): API client modules (authApi, postsApi, usersApi, dashboardApi)
+- **API** (`lib/api/`): API client modules (authApi, postsApi, usersApi, dashboardApi, filesApi, menuApi, categoriesApi)
 - **Utils** (`lib/utils.ts`): Tailwind class merge utility (`cn` function)
 
 ### Authentication Flow
@@ -154,16 +155,19 @@ All API routes under `/api/v1/`:
 - `/dashboard` - Statistics and recent activity
 - `/theme` - User theme settings
 - `/menu` - Dynamic menu structure
+- `/files` - File upload and management (supports multiple storage backends)
 
 ### Frontend Routes
 
 - `/login`, `/register` - Auth pages (redirect if authenticated)
 - `/dashboard` - Main dashboard with stats (role-based display)
 - `/posts`, `/posts/new`, `/posts/[id]`, `/posts/[id]/edit` - Post management
+- `/files` - User file management (grid/list view, upload, edit, delete)
 - `/settings` - User settings
 - `/admin/users` - User management (admin only)
 - `/admin/posts` - Post management for admin (admin only)
 - `/admin/menus` - Menu management (admin only)
+- `/admin/files` - File management for admin (admin only)
 
 ### User Roles
 
@@ -190,3 +194,19 @@ Admin user credentials: `adminuser` / `AdminPass123`
 - **Icons**: Lucide React
 - **Notifications**: Sonner (toast)
 - **HTTP**: Native fetch with token management in `lib/api/client.ts`
+
+### File Storage
+
+Configurable storage backends via `STORAGE_TYPE` environment variable:
+- `local` - Local file system storage (default, files stored in `uploads/` directory)
+- `supabase` - Supabase Storage (requires `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_BUCKET`)
+- `cloudflare` - Cloudflare R2 (requires `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`)
+- `s3` - AWS S3 (requires `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET`, `AWS_REGION`)
+
+Storage abstraction layer in `backend/app/storage/`:
+- `base.py` - Abstract base class (`BaseStorage`)
+- `local.py` - Local file system implementation
+- `supabase.py` - Supabase storage implementation
+- `cloudflare.py` - Cloudflare R2 implementation
+- `s3.py` - AWS S3 implementation
+- `factory.py` - Factory function for storage instantiation

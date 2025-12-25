@@ -31,6 +31,7 @@ from app.schemas.post import (
     CommentCreate,
     CommentResponse,
     CategoryCreate,
+    CategoryUpdate,
     CategoryResponse
 )
 from app.services.post import PostService
@@ -98,6 +99,65 @@ def create_category(
         slug=category_data.slug,
         description=category_data.description
     )
+
+
+@router.put(
+    "/categories/{category_id}",
+    response_model=CategoryResponse,
+    summary="카테고리 수정",
+    description="카테고리를 수정합니다. (관리자 전용)"
+)
+def update_category(
+    category_id: int,
+    category_data: CategoryUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """
+    카테고리 수정 (관리자 전용)
+
+    - **category_id**: 카테고리 ID
+    - **name**: 새 이름 (선택)
+    - **slug**: 새 슬러그 (선택)
+    - **description**: 새 설명 (선택)
+    - **order**: 정렬 순서 (선택)
+    - **is_active**: 활성화 여부 (선택)
+
+    Returns:
+        수정된 카테고리
+    """
+    post_service = PostService(db)
+    return post_service.update_category(
+        category_id=category_id,
+        name=category_data.name,
+        slug=category_data.slug,
+        description=category_data.description,
+        order=category_data.order,
+        is_active=category_data.is_active
+    )
+
+
+@router.delete(
+    "/categories/{category_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="카테고리 삭제",
+    description="카테고리를 삭제합니다. (관리자 전용)"
+)
+def delete_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """
+    카테고리 삭제 (관리자 전용)
+
+    카테고리를 삭제합니다.
+    해당 카테고리에 속한 게시글들은 카테고리 없음으로 변경됩니다.
+
+    - **category_id**: 삭제할 카테고리 ID
+    """
+    post_service = PostService(db)
+    post_service.delete_category(category_id)
 
 
 # ===========================================

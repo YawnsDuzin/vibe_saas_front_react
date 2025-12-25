@@ -20,7 +20,8 @@ FastAPI_Tutorial/
 │   │   ├── user.py               #       사용자 모델
 │   │   ├── post.py               #       게시글/댓글 모델
 │   │   ├── theme.py              #       테마 설정 모델
-│   │   └── menu.py               #       메뉴 모델
+│   │   ├── menu.py               #       메뉴 모델
+│   │   └── file.py               #       파일 모델
 │   │
 │   ├── schemas/                  #    📋 Pydantic 스키마
 │   │   ├── __init__.py
@@ -28,7 +29,8 @@ FastAPI_Tutorial/
 │   │   ├── auth.py               #       인증 스키마
 │   │   ├── post.py               #       게시글 스키마
 │   │   ├── theme.py              #       테마 스키마
-│   │   └── menu.py               #       메뉴 스키마
+│   │   ├── menu.py               #       메뉴 스키마
+│   │   └── file.py               #       파일 스키마
 │   │
 │   ├── routers/                  #    🛣️ API 엔드포인트
 │   │   ├── __init__.py           #       라우터 통합
@@ -37,13 +39,24 @@ FastAPI_Tutorial/
 │   │   ├── posts.py              #       게시글 라우터
 │   │   ├── dashboard.py          #       대시보드 라우터
 │   │   ├── theme.py              #       테마 라우터
-│   │   └── menu.py               #       메뉴 라우터
+│   │   ├── menu.py               #       메뉴 라우터
+│   │   └── files.py              #       파일 라우터
 │   │
 │   ├── services/                 #    💼 비즈니스 로직
 │   │   ├── __init__.py
 │   │   ├── auth.py               #       인증 서비스
 │   │   ├── user.py               #       사용자 서비스
-│   │   └── post.py               #       게시글 서비스
+│   │   ├── post.py               #       게시글 서비스
+│   │   └── file.py               #       파일 서비스
+│   │
+│   ├── storage/                  #    📂 파일 스토리지 추상화
+│   │   ├── __init__.py
+│   │   ├── base.py               #       기본 스토리지 인터페이스
+│   │   ├── local.py              #       로컬 파일 시스템
+│   │   ├── supabase.py           #       Supabase 스토리지
+│   │   ├── cloudflare.py         #       Cloudflare R2
+│   │   ├── s3.py                 #       AWS S3
+│   │   └── factory.py            #       스토리지 팩토리
 │   │
 │   ├── dependencies/             #    🔌 의존성 함수
 │   │   ├── __init__.py
@@ -583,6 +596,16 @@ app.include_router(api_router, prefix="/api/v1")
 │   ├── DELETE /{id}       게시글 삭제
 │   └── /{id}/comments/    댓글 관련
 │
+├── /files/
+│   ├── GET  /storage-info 스토리지 정보
+│   ├── POST /upload       파일 업로드
+│   ├── POST /upload-multiple 다중 파일 업로드
+│   ├── GET  /             내 파일 목록
+│   ├── GET  /{id}         파일 상세
+│   ├── PATCH /{id}        파일 수정
+│   ├── DELETE /{id}       파일 삭제
+│   └── GET  /admin/all    전체 파일 (관리자)
+│
 ├── /dashboard/
 │   └── GET  /stats        통계
 │
@@ -660,6 +683,7 @@ app.include_router(api_router, prefix="/api/v1")
 | schemas/ | 데이터 검증 | (독립적) |
 | routers/ | API 엔드포인트 | services, schemas |
 | services/ | 비즈니스 로직 | models |
+| storage/ | 파일 스토리지 추상화 | (독립적) |
 | dependencies/ | 공통 의존성 | services, database |
 | utils/ | 유틸리티 | (독립적) |
 

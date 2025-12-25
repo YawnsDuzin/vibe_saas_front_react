@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -12,11 +12,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { postsApi } from '@/lib/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { postsApi, categoriesApi } from '@/lib/api';
+import type { Category } from '@/types';
 
 const postSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요').max(200, '제목은 200자 이내로 입력해주세요'),
   content: z.string().min(1, '내용을 입력해주세요'),
+  category_id: z.number().optional(),
   is_published: z.boolean(),
 });
 
@@ -25,10 +34,13 @@ type PostForm = z.infer<typeof postSchema>;
 export default function NewPostPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
@@ -36,6 +48,20 @@ export default function NewPostPage() {
       is_published: true,
     },
   });
+
+  const categoryId = watch('category_id');
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoriesApi.getList();
+        setCategories(data);
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const onSubmit = async (data: PostForm) => {
     setError(null);
@@ -83,6 +109,29 @@ export default function NewPostPage() {
               {errors.title && (
                 <p className="text-sm text-red-500">{errors.title.message}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">카테고리</Label>
+              <Select
+                value={categoryId?.toString() || 'none'}
+                onValueChange={(value) => {
+                  setValue('category_id', value === 'none' ? undefined : parseInt(value));
+                }}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="카테고리 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">카테고리 없음</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
