@@ -1,24 +1,30 @@
 # 설치 가이드
 
-이 문서에서는 FastAPI 보일러플레이트 프로젝트를 설치하고 실행하는 방법을 설명합니다.
+이 문서에서는 FastAPI 보일러플레이트 프로젝트와 Next.js 프론트엔드를 설치하고 실행하는 방법을 설명합니다.
 
 ## 목차
 
 1. [시스템 요구사항](#시스템-요구사항)
 2. [프로젝트 설치](#프로젝트-설치)
 3. [데이터베이스 설정](#데이터베이스-설정)
-4. [서버 실행](#서버-실행)
-5. [Docker로 실행](#docker로-실행)
+4. [백엔드 서버 실행](#백엔드-서버-실행)
+5. [프론트엔드 설치 및 실행](#프론트엔드-설치-및-실행)
+6. [Docker로 실행](#docker로-실행)
 
 ---
 
 ## 시스템 요구사항
 
-### 필수 사항
+### 백엔드 필수 사항
 
 - **Python**: 3.10 이상
 - **pip**: 최신 버전 권장
 - **데이터베이스**: PostgreSQL, MySQL, MariaDB, 또는 SQLite
+
+### 프론트엔드 필수 사항
+
+- **Node.js**: 18.0 이상
+- **npm**: 9.0 이상 (또는 yarn, pnpm)
 
 ### 선택 사항
 
@@ -33,7 +39,7 @@
 
 ```bash
 git clone <repository-url>
-cd FastAPI_Tutorial
+cd vibe_saas_front_react
 ```
 
 ### 2. 가상환경 생성
@@ -170,7 +176,7 @@ SQLITE_FILE=./data/app.db
 
 ---
 
-## 서버 실행
+## 백엔드 서버 실행
 
 ### 개발 서버
 
@@ -208,6 +214,59 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 - **헬스 체크**: http://localhost:8000/health
+
+---
+
+## 프론트엔드 설치 및 실행
+
+### 1. 프론트엔드 디렉토리 이동
+
+```bash
+cd frontend
+```
+
+### 2. 의존성 설치
+
+```bash
+npm install
+```
+
+### 3. 환경 변수 설정 (선택)
+
+백엔드 서버가 `http://localhost:8000`이 아닌 경우, `.env.local` 파일을 생성합니다:
+
+```bash
+# frontend/.env.local
+NEXT_PUBLIC_API_URL=http://your-backend-url:8000
+```
+
+### 4. 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+프론트엔드가 http://localhost:3000 에서 실행됩니다.
+
+### 5. 프로덕션 빌드
+
+```bash
+# 빌드
+npm run build
+
+# 프로덕션 서버 실행
+npm start
+```
+
+### 프론트엔드 기술 스택
+
+- **Next.js 16**: React 프레임워크 (App Router)
+- **React 19**: UI 라이브러리
+- **TypeScript 5**: 타입 안전성
+- **Tailwind CSS 4**: 유틸리티 CSS
+- **shadcn/ui**: UI 컴포넌트 (Radix UI 기반)
+- **Zustand 5**: 상태 관리
+- **React Hook Form + Zod**: 폼 및 유효성 검사
 
 ---
 

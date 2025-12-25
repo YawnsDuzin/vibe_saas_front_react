@@ -9,18 +9,29 @@ frontend/
 ├── src/                             # 소스 코드
 │   ├── app/                         # Next.js App Router
 │   │   ├── (auth)/                  # 인증 페이지 그룹
+│   │   │   ├── layout.tsx           # 인증 레이아웃
+│   │   │   ├── login/page.tsx       # 로그인 페이지
+│   │   │   └── register/page.tsx    # 회원가입 페이지
 │   │   ├── (main)/                  # 메인 페이지 그룹
+│   │   │   ├── layout.tsx           # 메인 레이아웃
+│   │   │   ├── dashboard/page.tsx   # 대시보드
+│   │   │   ├── posts/               # 게시글
+│   │   │   │   ├── page.tsx         # 목록
+│   │   │   │   ├── new/page.tsx     # 작성
+│   │   │   │   └── [id]/page.tsx    # 상세
+│   │   │   ├── users/page.tsx       # 사용자 관리
+│   │   │   └── settings/page.tsx    # 설정
 │   │   ├── layout.tsx               # 루트 레이아웃
 │   │   ├── page.tsx                 # 홈페이지
 │   │   └── globals.css              # 전역 스타일
 │   │
 │   ├── components/                  # 재사용 컴포넌트
 │   │   ├── layout/                  # 레이아웃 컴포넌트
-│   │   └── ui/                      # UI 컴포넌트 (shadcn)
-│   │
-│   ├── lib/                         # 유틸리티 및 라이브러리
-│   │   ├── api/                     # API 클라이언트
-│   │   └── utils.ts                 # 유틸리티 함수
+│   │   │   ├── MainLayout.tsx       # 메인 레이아웃
+│   │   │   ├── Header.tsx           # 헤더
+│   │   │   ├── Sidebar.tsx          # 사이드바
+│   │   │   └── index.ts             # 내보내기
+│   │   └── ui/                      # UI 컴포넌트 (shadcn/ui)
 │   │
 │   ├── stores/                      # 상태 관리 (Zustand)
 │   │   ├── authStore.ts             # 인증 상태
@@ -33,8 +44,7 @@ frontend/
 ├── package.json                     # 프로젝트 설정
 ├── tsconfig.json                    # TypeScript 설정
 ├── next.config.ts                   # Next.js 설정
-├── tailwind.config.ts               # Tailwind CSS 설정
-└── .env.local                       # 환경 변수
+└── .env.local                       # 환경 변수 (선택)
 ```
 
 ---
@@ -270,65 +280,7 @@ components/ui/
 
 ---
 
-## 3. lib/ 폴더 상세
-
-### api/ - API 클라이언트
-
-```
-lib/api/
-├── client.ts        # 공통 API 클라이언트
-├── auth.ts          # 인증 API
-├── posts.ts         # 게시글 API
-├── users.ts         # 사용자 API
-├── dashboard.ts     # 대시보드 API
-└── index.ts         # 내보내기
-```
-
-#### index.ts - API 모듈 내보내기
-
-```tsx
-// src/lib/api/index.ts
-export { authApi } from "./auth";
-export { postsApi } from "./posts";
-export { usersApi } from "./users";
-export { dashboardApi } from "./dashboard";
-export { ApiError, getAccessToken, setTokens, clearTokens } from "./client";
-```
-
-**사용 예시:**
-```tsx
-import { authApi, postsApi } from "@/lib/api";
-
-await authApi.login(username, password);
-const posts = await postsApi.getList({ page: 1 });
-```
-
-### utils.ts - 유틸리티 함수
-
-```tsx
-// src/lib/utils.ts
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-// Tailwind CSS 클래스 병합 유틸리티
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-```
-
-**사용 예시:**
-```tsx
-// 조건부 클래스 적용
-<div className={cn(
-  "base-class",
-  isActive && "active-class",
-  variant === "primary" && "primary-class"
-)}>
-```
-
----
-
-## 4. stores/ 폴더 상세
+## 3. stores/ 폴더 상세
 
 Zustand를 사용한 전역 상태 관리입니다.
 
@@ -338,25 +290,73 @@ stores/
 └── themeStore.ts    # 테마 상태 (라이트/다크/시스템)
 ```
 
-### authStore.ts 구조
+### authStore.ts - 인증 상태 관리
 
 ```tsx
+// src/stores/authStore.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
 interface AuthState {
-  user: User | null;           // 현재 사용자
-  isAuthenticated: boolean;    // 인증 여부
-  isLoading: boolean;          // 로딩 상태
-  error: string | null;        // 에러 메시지
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
 
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   fetchUser: () => Promise<void>;
   clearError: () => void;
 }
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+
+      login: async (username, password) => {
+        set({ isLoading: true, error: null });
+        try {
+          const tokens = await authApi.login({ username, password });
+          const user = await authApi.getCurrentUser(tokens.access_token);
+          set({ user, isAuthenticated: true, isLoading: false });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : '로그인에 실패했습니다.';
+          set({ error: message, isLoading: false });
+          throw error;
+        }
+      },
+
+      logout: () => {
+        clearTokens();
+        set({ user: null, isAuthenticated: false, error: null });
+      },
+
+      fetchUser: async () => { /* ... */ },
+      clearError: () => set({ error: null }),
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);
 ```
 
-### themeStore.ts 구조
+**핵심 포인트:**
+- `persist` 미들웨어로 localStorage에 상태 유지
+- `partialize`로 저장할 상태만 선택
+
+### themeStore.ts - 테마 상태 관리
 
 ```tsx
+// src/stores/themeStore.ts
 interface ThemeState {
   theme: "light" | "dark" | "system";
   setTheme: (theme: "light" | "dark" | "system") => void;
@@ -365,29 +365,54 @@ interface ThemeState {
 
 ---
 
-## 5. types/ 폴더 상세
+## 4. types/ 폴더 상세
 
-TypeScript 타입 정의입니다.
+TypeScript 타입 정의입니다. 모든 타입이 `src/types/index.ts`에 정의되어 있습니다.
 
 ```tsx
 // src/types/index.ts
 
-// 사용자
+// ===== 사용자 타입 =====
+export type UserRole = 'admin' | 'moderator' | 'user';
+
 export interface User {
   id: number;
   email: string;
   username: string;
-  full_name?: string;
+  full_name: string | null;
   role: UserRole;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
-  updated_at: string;
+  last_login: string | null;
 }
 
-export type UserRole = "admin" | "moderator" | "user";
+export interface UserCreate {
+  email: string;
+  username: string;
+  full_name?: string;
+  password: string;
+}
 
-// 게시글
+// ===== 인증 타입 =====
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface Token {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+}
+
+// ===== 게시글 타입 =====
+export interface AuthorInfo {
+  id: number;
+  username: string;
+  full_name: string | null;
+}
+
 export interface Post {
   id: number;
   title: string;
@@ -396,42 +421,47 @@ export interface Post {
   view_count: number;
   is_published: boolean;
   is_pinned: boolean;
-  author: User;
-  category?: Category;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
+  author: AuthorInfo;
+  category: Category | null;
+  comment_count: number;
 }
 
-// 댓글
-export interface Comment {
-  id: number;
-  content: string;
-  author: User;
-  parent_id?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-// 인증
-export interface Token {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-}
-
-// 페이지네이션
-export interface PaginatedResponse<T> {
-  items: T[];
+export interface PostListResponse {
+  items: Post[];
   total: number;
   page: number;
   size: number;
   pages: number;
 }
+
+// ===== 댓글 타입 =====
+export interface Comment {
+  id: number;
+  content: string;
+  author: AuthorInfo;
+  post_id: number;
+  parent_id: number | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string | null;
+  replies: Comment[];
+}
+
+// ===== 대시보드 타입 =====
+export interface DashboardStats {
+  total_users: number;
+  total_posts: number;
+  total_comments: number;
+  recent_users: User[];
+  recent_posts: Post[];
+}
 ```
 
 ---
 
-## 6. 루트 파일들
+## 5. 루트 파일들
 
 ### middleware.ts
 
@@ -503,7 +533,7 @@ export const config = {
 
 ---
 
-## 7. Import 경로 별칭 (@/)
+## 6. Import 경로 별칭 (@/)
 
 ### tsconfig.json 설정
 
@@ -528,38 +558,30 @@ import { Button } from "@/components/ui/button";
 
 // 예시
 import { MainLayout } from "@/components/layout";
-import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 import { User, Post } from "@/types";
 ```
 
 ---
 
-## 8. 데이터 흐름도
+## 7. 데이터 흐름도
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      사용자 인터페이스                       │
+│                      사용자 인터페이스                        │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │                    페이지 (pages)                    │   │
 │  │  DashboardPage, PostsPage, UsersPage, SettingsPage  │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                            │                                │
-│                    상태 읽기/수정                           │
+│                    상태 읽기/수정                            │
 │                            ▼                                │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │                    상태 관리 (stores)                │   │
 │  │         authStore, themeStore                        │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                            │                                │
-│                      API 호출                               │
-│                            ▼                                │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                    API 클라이언트 (lib/api)          │   │
-│  │    authApi, postsApi, usersApi, dashboardApi        │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                            │                                │
-│                      HTTP 요청                              │
+│                      HTTP 요청                               │
 │                            ▼                                │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │                    FastAPI 백엔드                    │   │
@@ -576,8 +598,7 @@ import { User, Post } from "@/types";
 |-----------|------|----------|
 | `app/` | 페이지 및 라우팅 | 레이아웃, 페이지 컴포넌트 |
 | `components/` | 재사용 컴포넌트 | 레이아웃, UI 컴포넌트 |
-| `lib/` | 유틸리티 | API 클라이언트, 헬퍼 함수 |
-| `stores/` | 상태 관리 | Zustand 스토어 |
+| `stores/` | 상태 관리 | Zustand 스토어 (auth, theme) |
 | `types/` | 타입 정의 | TypeScript 인터페이스 |
 | `middleware.ts` | 요청 전처리 | 인증 확인, 리다이렉트 |
 
