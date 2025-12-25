@@ -28,8 +28,11 @@ project/
 # Change to backend directory
 cd backend
 
-# Run development server
+# Run development server (localhost only)
 uvicorn app.main:app --reload
+
+# Run development server (allow external IP access)
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Run all tests
 pytest
@@ -81,8 +84,9 @@ npm run lint
 3. Set `JWT_SECRET_KEY` and `SECRET_KEY` for production
 
 ### Frontend
-1. Create `frontend/.env.local` for environment variables
-2. Set `NEXT_PUBLIC_API_URL` if backend is not at `http://localhost:8000`
+1. Create `frontend/.env.local` for environment variables (optional)
+2. API URL is automatically detected based on browser's current host
+3. Set `NEXT_PUBLIC_API_URL` only if you need to override the automatic detection
 
 ## Architecture
 
@@ -154,10 +158,12 @@ All API routes under `/api/v1/`:
 ### Frontend Routes
 
 - `/login`, `/register` - Auth pages (redirect if authenticated)
-- `/dashboard` - Main dashboard with stats
-- `/posts`, `/posts/new`, `/posts/[id]` - Post management
-- `/users` - User management (admin only)
+- `/dashboard` - Main dashboard with stats (role-based display)
+- `/posts`, `/posts/new`, `/posts/[id]`, `/posts/[id]/edit` - Post management
 - `/settings` - User settings
+- `/admin/users` - User management (admin only)
+- `/admin/posts` - Post management for admin (admin only)
+- `/admin/menus` - Menu management (admin only)
 
 ### User Roles
 

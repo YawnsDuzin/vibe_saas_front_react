@@ -6,16 +6,17 @@ FastAPI 라우터들을 정의하는 패키지입니다.
 
 각 라우터는 특정 기능 영역을 담당합니다:
 - auth: 인증 (로그인, 회원가입, 토큰 갱신)
-- users: 사용자 관리
+- users: 사용자 개인 정보
 - posts: 게시글 및 댓글
 - dashboard: 대시보드 통계
 - theme: 테마 설정
 - menu: 메뉴 구조
+- admin: 관리자 전용 (사용자 관리 등)
 """
 
 from fastapi import APIRouter
 
-from app.routers import auth, users, posts, dashboard, theme, menu
+from app.routers import auth, users, posts, dashboard, theme, menu, admin
 
 # 메인 API 라우터
 api_router = APIRouter()
@@ -55,4 +56,10 @@ api_router.include_router(
     menu.router,
     prefix="/menu",
     tags=["메뉴"]
+)
+
+api_router.include_router(
+    admin.router,
+    prefix="/admin",
+    tags=["관리자"]
 )

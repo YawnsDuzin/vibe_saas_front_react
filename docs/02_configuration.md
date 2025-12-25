@@ -188,7 +188,8 @@ class UserRole(str, Enum):
 
 ```env
 # 허용된 오리진 (JSON 배열 형식)
-CORS_ORIGINS=["http://localhost:3000","http://localhost:8080"]
+# 개발 환경에서는 ["*"]를 사용하여 모든 오리진 허용 (기본값)
+CORS_ORIGINS=["*"]
 
 # 자격 증명 허용 (쿠키, Authorization 헤더 등)
 CORS_ALLOW_CREDENTIALS=true
@@ -199,6 +200,21 @@ CORS_ALLOW_METHODS=["*"]
 # 허용된 헤더
 CORS_ALLOW_HEADERS=["*"]
 ```
+
+### 모든 오리진 허용 (개발 환경)
+
+`CORS_ORIGINS=["*"]`로 설정하면 모든 오리진에서의 접속을 허용합니다.
+이 설정은 내부적으로 `allow_origin_regex=r".*"`를 사용하여 `allow_credentials=true`와 함께 동작합니다.
+
+```env
+# 개발 환경: 모든 오리진 허용
+CORS_ORIGINS=["*"]
+```
+
+이 설정을 사용하면:
+- `http://localhost:3000` (로컬 개발)
+- `http://192.168.0.x:3000` (같은 네트워크의 다른 PC)
+- 기타 모든 오리진에서 접속 가능
 
 ### 프로덕션 설정 예시
 
@@ -215,9 +231,23 @@ CORS_ALLOW_HEADERS=["Authorization","Content-Type"]
 
 ### CORS 관련 주의사항
 
-1. **와일드카드(`*`) 사용 자제**: 프로덕션에서는 구체적인 도메인 지정
-2. **자격 증명과 와일드카드**: `CORS_ALLOW_CREDENTIALS=true`일 때 오리진에 `*` 사용 불가
+1. **개발 환경**: `["*"]` 사용으로 편리하게 개발 (내부적으로 `allow_origin_regex` 사용)
+2. **프로덕션 환경**: 보안을 위해 구체적인 도메인 지정 권장
 3. **프리플라이트 캐시**: 복잡한 요청의 경우 OPTIONS 요청 발생
+
+### 외부 IP 접속 설정
+
+같은 네트워크의 다른 PC에서 접속하려면:
+
+1. **백엔드**: 모든 네트워크 인터페이스에서 수신하도록 실행
+   ```bash
+   cd backend
+   uvicorn app.main:app --reload --host 0.0.0.0
+   ```
+
+2. **프론트엔드**: 기본적으로 동적 API URL을 사용하여 현재 접속한 호스트의 8000 포트로 연결
+   - `NEXT_PUBLIC_API_URL` 환경변수가 없으면 브라우저의 현재 호스트명 기반으로 자동 설정
+   - 예: `http://192.168.0.8:3000`으로 접속 시 API는 `http://192.168.0.8:8000`으로 연결
 
 ---
 

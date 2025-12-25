@@ -150,3 +150,28 @@ class UserInDB(UserResponse):
     API 응답으로 직접 반환하지 않습니다.
     """
     hashed_password: str = Field(..., description="해시된 비밀번호")
+
+
+class PaginatedUserResponse(BaseModel):
+    """
+    페이지네이션된 사용자 목록 응답 스키마
+
+    관리자용 사용자 목록 조회 시 사용됩니다.
+    """
+    items: list[UserResponse] = Field(..., description="사용자 목록")
+    total: int = Field(..., description="전체 사용자 수")
+    page: int = Field(..., description="현재 페이지")
+    size: int = Field(..., description="페이지 크기")
+    pages: int = Field(..., description="전체 페이지 수")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "items": [],
+                "total": 100,
+                "page": 1,
+                "size": 10,
+                "pages": 10
+            }
+        }
+    }

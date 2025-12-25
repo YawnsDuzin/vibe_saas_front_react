@@ -73,7 +73,8 @@ class UserService:
         self,
         skip: int = 0,
         limit: int = 100,
-        is_active: Optional[bool] = None
+        is_active: Optional[bool] = None,
+        search: Optional[str] = None
     ) -> List[User]:
         """
         사용자 목록을 조회합니다.
@@ -82,6 +83,7 @@ class UserService:
             skip: 건너뛸 레코드 수
             limit: 최대 조회 수
             is_active: 활성 상태 필터
+            search: 검색어 (사용자명, 이메일)
 
         Returns:
             List[User]: 사용자 목록
@@ -91,7 +93,45 @@ class UserService:
         if is_active is not None:
             query = query.filter(User.is_active == is_active)
 
-        return query.offset(skip).limit(limit).all()
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                (User.username.ilike(search_pattern)) |
+                (User.email.ilike(search_pattern)) |
+                (User.full_name.ilike(search_pattern))
+            )
+
+        return query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
+
+    def get_users_count(
+        self,
+        is_active: Optional[bool] = None,
+        search: Optional[str] = None
+    ) -> int:
+        """
+        사용자 수를 조회합니다.
+
+        Args:
+            is_active: 활성 상태 필터
+            search: 검색어 (사용자명, 이메일)
+
+        Returns:
+            int: 사용자 수
+        """
+        query = self.db.query(User)
+
+        if is_active is not None:
+            query = query.filter(User.is_active == is_active)
+
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                (User.username.ilike(search_pattern)) |
+                (User.email.ilike(search_pattern)) |
+                (User.full_name.ilike(search_pattern))
+            )
+
+        return query.count()
 
     def create_user(self, user_data: UserCreate) -> User:
         """
@@ -241,6 +281,29 @@ class UserService:
             )
 
         user.is_active = False
+        self.db.commit()
+        self.db.refresh(user)
+
+        return user
+
+    def activate_user(self, user_id: int) -> User:
+        """
+        사용자 계정을 활성화합니다.
+
+        Args:
+            user_id: 활성화할 사용자 ID
+
+        Returns:
+            User: 활성화된 사용자
+        """
+        user = self.get_user(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="사용자를 찾을 수 없습니다."
+            )
+
+        user.is_active = True
         self.db.commit()
         self.db.refresh(user)
 

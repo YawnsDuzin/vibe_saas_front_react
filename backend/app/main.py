@@ -99,13 +99,24 @@ app = FastAPI(
 )
 
 # CORS 미들웨어 설정
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=settings.cors_allow_credentials,
-    allow_methods=settings.cors_allow_methods_list,
-    allow_headers=settings.cors_allow_headers_list,
-)
+# allow_origins=["*"]와 allow_credentials=True는 함께 사용할 수 없으므로
+# allow_origin_regex를 사용하여 모든 origin을 동적으로 허용
+if settings.cors_origins_list == ["*"]:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r".*",  # 모든 origin 허용 (정규식)
+        allow_credentials=settings.cors_allow_credentials,
+        allow_methods=settings.cors_allow_methods_list,
+        allow_headers=settings.cors_allow_headers_list,
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=settings.cors_allow_credentials,
+        allow_methods=settings.cors_allow_methods_list,
+        allow_headers=settings.cors_allow_headers_list,
+    )
 
 
 # ===========================================

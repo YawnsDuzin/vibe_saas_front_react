@@ -87,7 +87,7 @@ export default function PostsPage() {
       ) : (
         <>
           {/* 게시글 목록 */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             {posts.length === 0 ? (
               <Card>
                 <CardContent className="py-10 text-center text-muted-foreground">
@@ -96,7 +96,7 @@ export default function PostsPage() {
               </Card>
             ) : (
               posts.map((post) => (
-                <Link key={post.id} href={`/posts/${post.id}`}>
+                <Link key={post.id} href={`/posts/${post.id}`} className="block">
                   <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">

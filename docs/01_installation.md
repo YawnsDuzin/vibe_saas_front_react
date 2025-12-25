@@ -243,7 +243,11 @@ npm install
 
 ### 3. 환경 변수 설정 (선택)
 
-백엔드 서버가 `http://localhost:8000`이 아닌 경우, `.env.local` 파일을 생성합니다:
+프론트엔드는 기본적으로 **동적 API URL**을 사용합니다:
+- `NEXT_PUBLIC_API_URL` 환경변수가 설정되지 않으면, 브라우저의 현재 호스트명을 기준으로 API URL을 자동 생성합니다.
+- 예: `http://192.168.0.8:3000`으로 접속 시 → API는 `http://192.168.0.8:8000`으로 연결
+
+API URL을 고정하려면 `.env.local` 파일을 생성합니다:
 
 ```bash
 # frontend/.env.local
@@ -257,6 +261,22 @@ npm run dev
 ```
 
 프론트엔드가 http://localhost:3000 에서 실행됩니다.
+
+### 외부 네트워크에서 접속
+
+같은 네트워크의 다른 PC에서 접속하려면:
+
+```bash
+# 백엔드: 모든 인터페이스에서 수신
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0
+
+# 프론트엔드: 모든 인터페이스에서 수신
+cd frontend
+npm run dev -- --hostname 0.0.0.0
+```
+
+그러면 `http://<서버IP>:3000`과 `http://<서버IP>:8000`으로 접속할 수 있습니다.
 
 ### 5. 프로덕션 빌드
 

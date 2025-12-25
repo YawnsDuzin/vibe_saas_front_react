@@ -32,7 +32,7 @@ import { usersApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { User } from '@/types';
 
-export default function UsersPage() {
+export default function AdminUsersPage() {
   const { user: currentUser } = useAuthStore();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +70,7 @@ export default function UsersPage() {
   const handleToggleActive = async (user: User) => {
     setActionLoading(true);
     try {
-      await usersApi.toggleActive(user.id, !user.is_active);
+      await usersApi.toggleActive(user.id);
       fetchUsers();
     } catch (err) {
       alert(err instanceof Error ? err.message : '상태 변경에 실패했습니다.');
@@ -104,15 +104,6 @@ export default function UsersPage() {
         return <Badge variant="outline">사용자</Badge>;
     }
   };
-
-  // 권한 체크
-  if (!currentUser || !['admin', 'moderator'].includes(currentUser.role)) {
-    return (
-      <div className="p-4 text-red-500 bg-red-50 dark:bg-red-950 rounded-lg">
-        접근 권한이 없습니다.
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -213,7 +204,7 @@ export default function UsersPage() {
                                 </>
                               )}
                             </DropdownMenuItem>
-                            {currentUser.role === 'admin' && user.id !== currentUser.id && (
+                            {currentUser?.role === 'admin' && user.id !== currentUser.id && (
                               <DropdownMenuItem
                                 className="text-red-500"
                                 onClick={() => {

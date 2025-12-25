@@ -140,8 +140,10 @@ export interface DashboardStats {
   total_users: number;
   total_posts: number;
   total_comments: number;
-  recent_users: User[];
-  recent_posts: Post[];
+  posts_today: number;
+  users_today: number;
+  my_posts: number;
+  my_comments: number;
 }
 
 // ===================================

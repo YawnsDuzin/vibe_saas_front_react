@@ -42,9 +42,12 @@ const iconMap: Record<string, LucideIcon> = {
 // 폴백 메뉴 (API 실패 시)
 const fallbackMenuItems = [
   { name: '대시보드', url: '/dashboard', icon: 'fa-dashboard', required_role: null },
-  { name: '게시글', url: '/posts', icon: 'fa-list', required_role: null },
-  { name: '사용자 관리', url: '/users', icon: 'fa-users', required_role: 'admin' },
+  { name: '게시판', url: '/posts', icon: 'fa-list', required_role: null },
+  { name: '내 정보', url: '/profile', icon: 'fa-user', required_role: null },
   { name: '설정', url: '/settings', icon: 'fa-cog', required_role: null },
+  { name: '관리자', url: '/admin', icon: 'fa-shield', required_role: 'admin', children: [
+    { name: '사용자 관리', url: '/admin/users', icon: 'fa-users', required_role: 'admin' },
+  ]},
 ];
 
 function MenuItemComponent({
@@ -52,22 +55,26 @@ function MenuItemComponent({
   pathname,
   onItemClick,
   level = 0,
+  expandedMenus,
+  onToggleExpand,
 }: {
   menu: Menu;
   pathname: string;
   onItemClick?: () => void;
   level?: number;
+  expandedMenus: Set<number>;
+  onToggleExpand: (menuId: number) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const hasChildren = menu.children && menu.children.length > 0;
   const Icon = iconMap[menu.icon || ''] || FileText;
   const isActive = pathname === menu.url || pathname.startsWith(`${menu.url}/`);
+  const isExpanded = expandedMenus.has(menu.id);
 
   if (hasChildren) {
     return (
       <div>
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => onToggleExpand(menu.id)}
           className={cn(
             'flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
             isActive
@@ -80,13 +87,13 @@ function MenuItemComponent({
             <Icon className="h-4 w-4" />
             {menu.name}
           </span>
-          {expanded ? (
+          {isExpanded ? (
             <ChevronDown className="h-4 w-4" />
           ) : (
             <ChevronRight className="h-4 w-4" />
           )}
         </button>
-        {expanded && (
+        {isExpanded && (
           <div className="ml-2 mt-1">
             {menu.children.map((child) => (
               <MenuItemComponent
@@ -95,6 +102,8 @@ function MenuItemComponent({
                 pathname={pathname}
                 onItemClick={onItemClick}
                 level={level + 1}
+                expandedMenus={expandedMenus}
+                onToggleExpand={onToggleExpand}
               />
             ))}
           </div>
@@ -126,6 +135,41 @@ function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
   const { user } = useAuthStore();
   const [menus, setMenus] = useState<Menu[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedMenus, setExpandedMenus] = useState<Set<number>>(new Set());
+
+  // 메뉴 펼침/접기 토글
+  const handleToggleExpand = (menuId: number) => {
+    setExpandedMenus((prev) => {
+      const next = new Set(prev);
+      if (next.has(menuId)) {
+        next.delete(menuId);
+      } else {
+        next.add(menuId);
+      }
+      return next;
+    });
+  };
+
+  // 현재 경로에 해당하는 부모 메뉴를 자동으로 펼침
+  const findParentMenuIds = (menuList: Menu[], path: string): number[] => {
+    const ids: number[] = [];
+    const findInMenu = (menu: Menu): boolean => {
+      if (path.startsWith(menu.url)) {
+        if (menu.children && menu.children.length > 0) {
+          ids.push(menu.id);
+          for (const child of menu.children) {
+            findInMenu(child);
+          }
+        }
+        return true;
+      }
+      return false;
+    };
+    for (const menu of menuList) {
+      findInMenu(menu);
+    }
+    return ids;
+  };
 
   useEffect(() => {
     const fetchMenus = async () => {
@@ -135,18 +179,21 @@ function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
       } catch (error) {
         console.error('Failed to fetch menus:', error);
         // 폴백 메뉴 사용
-        setMenus(fallbackMenuItems.map((item, index) => ({
-          id: index + 1,
+        const convertToMenu = (item: typeof fallbackMenuItems[0], index: number, parentId: number | null = null): Menu => ({
+          id: parentId ? parentId * 100 + index : index + 1,
           name: item.name,
           url: item.url,
           icon: item.icon,
-          parent_id: null,
+          parent_id: parentId,
           order: index,
           is_active: true,
           required_role: item.required_role,
           created_at: new Date().toISOString(),
-          children: [],
-        })));
+          children: 'children' in item && item.children
+            ? item.children.map((child, childIndex) => convertToMenu(child as typeof fallbackMenuItems[0], childIndex, index + 1))
+            : [],
+        });
+        setMenus(fallbackMenuItems.map((item, index) => convertToMenu(item, index)));
       } finally {
         setLoading(false);
       }
@@ -154,6 +201,20 @@ function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
 
     fetchMenus();
   }, []);
+
+  // 메뉴 로드 후 현재 경로에 맞게 펼침
+  useEffect(() => {
+    if (menus.length > 0) {
+      const parentIds = findParentMenuIds(menus, pathname);
+      if (parentIds.length > 0) {
+        setExpandedMenus((prev) => {
+          const next = new Set(prev);
+          parentIds.forEach((id) => next.add(id));
+          return next;
+        });
+      }
+    }
+  }, [menus, pathname]);
 
   // 역할 기반 필터링
   const filteredMenus = menus.filter((menu) => {
@@ -182,6 +243,8 @@ function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
               menu={menu}
               pathname={pathname}
               onItemClick={onItemClick}
+              expandedMenus={expandedMenus}
+              onToggleExpand={handleToggleExpand}
             />
           ))}
         </nav>
