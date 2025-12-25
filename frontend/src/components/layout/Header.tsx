@@ -98,9 +98,9 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/settings')}>
+                <DropdownMenuItem onClick={() => router.push('/profile')}>
                   <User className="mr-2 h-4 w-4" />
-                  <span>프로필</span>
+                  <span>내 정보</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/settings')}>
                   <Settings className="mr-2 h-4 w-4" />

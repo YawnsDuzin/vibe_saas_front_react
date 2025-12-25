@@ -29,6 +29,9 @@ FastAPI 백엔드와 Next.js 프론트엔드를 사용한 풀스택 보일러플
 git clone <repository-url>
 cd vibe_saas_front_react
 
+# 백엔드 디렉토리로 이동
+cd backend
+
 # 가상환경 생성 및 활성화
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
@@ -110,17 +113,22 @@ npm run dev
 
 ```
 vibe_saas_front_react/
-├── app/                      # FastAPI 백엔드
-│   ├── __init__.py
-│   ├── main.py               # FastAPI 애플리케이션
-│   ├── config.py             # 설정 관리
-│   ├── database.py           # DB 연결
-│   ├── models/               # SQLAlchemy 모델
-│   ├── schemas/              # Pydantic 스키마
-│   ├── routers/              # API 라우터
-│   ├── services/             # 비즈니스 로직
-│   ├── dependencies/         # 종속성 (인증 등)
-│   └── utils/                # 유틸리티
+├── backend/                  # FastAPI 백엔드
+│   ├── app/                  # 애플리케이션 코드
+│   │   ├── __init__.py
+│   │   ├── main.py           # FastAPI 애플리케이션
+│   │   ├── config.py         # 설정 관리
+│   │   ├── database.py       # DB 연결
+│   │   ├── models/           # SQLAlchemy 모델
+│   │   ├── schemas/          # Pydantic 스키마
+│   │   ├── routers/          # API 라우터
+│   │   ├── services/         # 비즈니스 로직
+│   │   ├── dependencies/     # 종속성 (인증 등)
+│   │   └── utils/            # 유틸리티
+│   ├── tests/                # 백엔드 테스트
+│   ├── alembic/              # DB 마이그레이션
+│   ├── requirements.txt
+│   └── .env.example
 ├── frontend/                 # Next.js 프론트엔드
 │   ├── src/
 │   │   ├── app/              # App Router 페이지
@@ -134,13 +142,9 @@ vibe_saas_front_react/
 │   │   └── types/            # TypeScript 타입 정의
 │   ├── package.json
 │   └── tsconfig.json
-├── tests/                    # 백엔드 테스트
 ├── docs/                     # 문서
 │   ├── backend/              # 백엔드 튜토리얼
 │   └── frontend/             # 프론트엔드 튜토리얼
-├── alembic/                  # DB 마이그레이션
-├── requirements.txt
-├── .env.example
 └── README.md
 ```
 

@@ -118,36 +118,42 @@ data = jwt.decode(token, "secret_key")
 ## 프로젝트 구조 미리보기
 
 ```
-app/
-├── main.py              # 🚀 앱 시작점 (FastAPI 앱 생성)
-├── config.py            # ⚙️ 환경 설정 (DB 정보, 시크릿 키 등)
-├── database.py          # 🗄️ 데이터베이스 연결 설정
+backend/
+├── app/
+│   ├── main.py              # 🚀 앱 시작점 (FastAPI 앱 생성)
+│   ├── config.py            # ⚙️ 환경 설정 (DB 정보, 시크릿 키 등)
+│   ├── database.py          # 🗄️ 데이터베이스 연결 설정
+│   │
+│   ├── models/              # 📦 데이터베이스 테이블 정의
+│   │   ├── user.py          #    - 사용자 테이블
+│   │   ├── post.py          #    - 게시글/댓글 테이블
+│   │   └── ...
+│   │
+│   ├── schemas/             # 📋 API 요청/응답 형식 정의
+│   │   ├── user.py          #    - 사용자 관련 스키마
+│   │   ├── auth.py          #    - 인증 관련 스키마
+│   │   └── ...
+│   │
+│   ├── routers/             # 🛣️ API 엔드포인트 (URL 경로)
+│   │   ├── auth.py          #    - /auth/* 경로
+│   │   ├── users.py         #    - /users/* 경로
+│   │   └── ...
+│   │
+│   ├── services/            # 💼 비즈니스 로직 (실제 처리)
+│   │   ├── auth.py          #    - 로그인, 토큰 발급
+│   │   ├── user.py          #    - 사용자 생성, 조회
+│   │   └── ...
+│   │
+│   ├── dependencies/        # 🔌 공통 의존성 (인증 확인 등)
+│   │   └── auth.py          #    - 토큰 검증, 권한 확인
+│   │
+│   └── utils/               # 🔧 유틸리티 함수
+│       └── security.py      #    - 비밀번호 해싱, JWT 처리
 │
-├── models/              # 📦 데이터베이스 테이블 정의
-│   ├── user.py          #    - 사용자 테이블
-│   ├── post.py          #    - 게시글/댓글 테이블
-│   └── ...
-│
-├── schemas/             # 📋 API 요청/응답 형식 정의
-│   ├── user.py          #    - 사용자 관련 스키마
-│   ├── auth.py          #    - 인증 관련 스키마
-│   └── ...
-│
-├── routers/             # 🛣️ API 엔드포인트 (URL 경로)
-│   ├── auth.py          #    - /auth/* 경로
-│   ├── users.py         #    - /users/* 경로
-│   └── ...
-│
-├── services/            # 💼 비즈니스 로직 (실제 처리)
-│   ├── auth.py          #    - 로그인, 토큰 발급
-│   ├── user.py          #    - 사용자 생성, 조회
-│   └── ...
-│
-├── dependencies/        # 🔌 공통 의존성 (인증 확인 등)
-│   └── auth.py          #    - 토큰 검증, 권한 확인
-│
-└── utils/               # 🔧 유틸리티 함수
-    └── security.py      #    - 비밀번호 해싱, JWT 처리
+├── tests/                   # 테스트 코드
+├── alembic/                 # DB 마이그레이션
+├── requirements.txt
+└── .env.example
 ```
 
 ## 요청 처리 흐름
@@ -202,12 +208,16 @@ app/
 
 ## 개발 환경 설정
 
-### 1. 가상 환경 생성
+### 1. 백엔드 디렉토리로 이동
 
 ```bash
-# 프로젝트 폴더로 이동
-cd FastAPI_Tutorial
+# 프로젝트 루트에서 backend 폴더로 이동
+cd backend
+```
 
+### 2. 가상 환경 생성
+
+```bash
 # 가상 환경 생성 (처음 한 번만)
 python -m venv venv
 
@@ -218,7 +228,7 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-### 2. 패키지 설치
+### 3. 패키지 설치
 
 ```bash
 pip install -r requirements.txt
@@ -232,7 +242,7 @@ pip install -r requirements.txt
 - `python-jose` - JWT 토큰
 - `passlib[bcrypt]` - 비밀번호 해싱
 
-### 3. 환경 변수 설정
+### 4. 환경 변수 설정
 
 ```bash
 # .env.example을 복사해서 .env 파일 생성
@@ -244,7 +254,7 @@ cp .env.example .env
 # JWT_SECRET_KEY=your-secret-key-here
 ```
 
-### 4. 서버 실행
+### 5. 서버 실행
 
 ```bash
 # 개발 서버 실행 (자동 재시작 활성화)
@@ -254,7 +264,7 @@ uvicorn app.main:app --reload
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 5. API 문서 확인
+### 6. API 문서 확인
 
 서버 실행 후 브라우저에서:
 - **Swagger UI**: http://localhost:8000/docs

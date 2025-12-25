@@ -170,3 +170,43 @@ export interface PaginationParams {
   size?: number;
   search?: string;
 }
+
+// ===================================
+// Menu Types (API)
+// ===================================
+
+export interface Menu {
+  id: number;
+  name: string;
+  url: string;
+  icon: string | null;
+  parent_id: number | null;
+  order: number;
+  is_active: boolean;
+  required_role: string | null;
+  created_at: string;
+  children: Menu[];
+}
+
+export interface MenuCreate {
+  name: string;
+  url: string;
+  icon?: string;
+  parent_id?: number;
+  order?: number;
+  required_role?: string;
+}
+
+export interface MenuUpdate {
+  name?: string;
+  url?: string;
+  icon?: string;
+  parent_id?: number;
+  order?: number;
+  is_active?: boolean;
+  required_role?: string;
+}
+
+export interface MenuTreeResponse {
+  menus: Menu[];
+}

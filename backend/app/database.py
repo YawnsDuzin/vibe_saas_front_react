@@ -43,7 +43,7 @@ def get_engine():
         engine = create_engine(
             database_url,
             connect_args={"check_same_thread": False},
-            poolclass=StaticPool,
+            # poolclass=StaticPool,  # 멀티스레드 트랜잭션 충돌 방지
             echo=settings.debug
         )
 

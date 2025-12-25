@@ -6,11 +6,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Full-stack boilerplate project with FastAPI backend and Next.js frontend. Features JWT authentication, role-based access control, and multi-database support. Korean language is used for UI messages and documentation.
 
+## Project Structure
+
+```
+project/
+├── backend/          # FastAPI Backend
+│   ├── app/          # Application code
+│   ├── alembic/      # Database migrations
+│   ├── tests/        # Backend tests
+│   └── requirements.txt
+├── frontend/         # Next.js Frontend
+│   └── src/
+└── docs/             # Documentation
+```
+
 ## Development Commands
 
 ### Backend (FastAPI)
 
 ```bash
+# Change to backend directory
+cd backend
+
 # Run development server
 uvicorn app.main:app --reload
 
@@ -59,7 +76,7 @@ npm run lint
 ## Environment Setup
 
 ### Backend
-1. Copy `.env.example` to `.env`
+1. Copy `backend/.env.example` to `backend/.env`
 2. Configure database type via `DB_TYPE` (postgresql, mysql, mariadb, sqlite)
 3. Set `JWT_SECRET_KEY` and `SECRET_KEY` for production
 
@@ -76,11 +93,11 @@ Request → Router → Service → Model/DB
                 ↘ Dependency (auth) ↗
 ```
 
-- **Routers** (`app/routers/`): HTTP endpoints, request/response handling
-- **Services** (`app/services/`): Business logic, database operations
-- **Dependencies** (`app/dependencies/`): Reusable injection dependencies (auth, db session)
-- **Models** (`app/models/`): SQLAlchemy ORM models
-- **Schemas** (`app/schemas/`): Pydantic validation schemas
+- **Routers** (`backend/app/routers/`): HTTP endpoints, request/response handling
+- **Services** (`backend/app/services/`): Business logic, database operations
+- **Dependencies** (`backend/app/dependencies/`): Reusable injection dependencies (auth, db session)
+- **Models** (`backend/app/models/`): SQLAlchemy ORM models
+- **Schemas** (`backend/app/schemas/`): Pydantic validation schemas
 
 ### Frontend Structure
 
@@ -148,7 +165,7 @@ All API routes under `/api/v1/`:
 
 ### Testing
 
-Tests use in-memory SQLite with dependency override. Fixtures in `tests/conftest.py`:
+Tests use in-memory SQLite with dependency override. Fixtures in `backend/tests/conftest.py`:
 - `db_session` - Fresh DB session per test (tables created/dropped per test)
 - `client` - TestClient instance (depends on db_session)
 - `test_user` / `admin_user` - Pre-created users with known credentials

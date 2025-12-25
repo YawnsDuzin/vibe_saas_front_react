@@ -42,7 +42,13 @@ git clone <repository-url>
 cd vibe_saas_front_react
 ```
 
-### 2. 가상환경 생성
+### 2. 백엔드 디렉토리 이동
+
+```bash
+cd backend
+```
+
+### 3. 가상환경 생성
 
 가상환경을 사용하여 의존성을 격리합니다.
 
@@ -58,14 +64,14 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
-### 3. 의존성 설치
+### 4. 의존성 설치
 
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. 환경 변수 설정
+### 5. 환경 변수 설정
 
 ```bash
 # .env.example을 복사하여 .env 파일 생성
@@ -222,7 +228,11 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
 ### 1. 프론트엔드 디렉토리 이동
 
 ```bash
+# 프로젝트 루트에서
 cd frontend
+
+# 또는 backend에서
+cd ../frontend
 ```
 
 ### 2. 의존성 설치
