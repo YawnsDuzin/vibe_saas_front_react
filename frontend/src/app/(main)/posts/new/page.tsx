@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Upload, X, File } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { postsApi, categoriesApi } from '@/lib/api';
-import type { Category } from '@/types';
+import { postsApi, categoriesApi, filesApi, toAbsoluteUrl } from '@/lib/api';
+import type { Category, FileResponse } from '@/types';
 
 const postSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요').max(200, '제목은 200자 이내로 입력해주세요'),
@@ -35,6 +35,9 @@ export default function NewPostPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<FileResponse[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -63,10 +66,43 @@ export default function NewPostPage() {
     fetchCategories();
   }, []);
 
+  const handleFileUpload = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const uploadPromises = Array.from(files).map(file => filesApi.upload(file));
+      const uploadedFiles = await Promise.all(uploadPromises);
+
+      // 업로드된 파일의 상세 정보 가져오기
+      const fileDetails = await Promise.all(
+        uploadedFiles.map(f => filesApi.getById(f.id))
+      );
+
+      setAttachedFiles(prev => [...prev, ...fileDetails]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '파일 업로드에 실패했습니다.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, []);
+
+  const removeFile = useCallback((fileId: number) => {
+    setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
+  }, []);
+
   const onSubmit = async (data: PostForm) => {
     setError(null);
     try {
-      const post = await postsApi.create(data);
+      const post = await postsApi.create({
+        ...data,
+        file_ids: attachedFiles.map(f => f.id),
+      });
       router.push(`/posts/${post.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : '게시글 작성에 실패했습니다.';
@@ -148,6 +184,71 @@ export default function NewPostPage() {
               )}
             </div>
 
+            {/* 이미지 첨부 섹션 */}
+            <div className="space-y-2">
+              <Label>이미지 첨부</Label>
+              <div className="border-2 border-dashed rounded-lg p-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handleFileUpload(e.target.files)}
+                  className="hidden"
+                  id="file-upload"
+                  disabled={isSubmitting || isUploading}
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="flex flex-col items-center justify-center cursor-pointer py-4"
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                  )}
+                  <span className="mt-2 text-sm text-muted-foreground">
+                    {isUploading ? '업로드 중...' : '클릭하여 이미지 선택'}
+                  </span>
+                </label>
+
+                {/* 첨부된 파일 목록 */}
+                {attachedFiles.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {attachedFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        className="relative group rounded-lg overflow-hidden border bg-muted"
+                      >
+                        {file.is_image ? (
+                          <img
+                            src={toAbsoluteUrl(file.url)}
+                            alt={file.alt_text || file.filename}
+                            className="w-full h-24 object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-24 flex items-center justify-center">
+                            <File className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeFile(file.id)}
+                          className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <div className="p-1 text-xs truncate">{file.filename}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                이미지를 여러 개 선택할 수 있습니다. (최대 10MB)
+              </p>
+            </div>
+
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -160,7 +261,7 @@ export default function NewPostPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isUploading}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 작성하기
               </Button>

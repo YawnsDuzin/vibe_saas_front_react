@@ -90,6 +90,7 @@ class Post(Base):
     author = relationship("User", back_populates="posts")
     category = relationship("Category", back_populates="posts")
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    post_files = relationship("PostFile", back_populates="post", cascade="all, delete-orphan", order_by="PostFile.display_order")
 
     def __repr__(self) -> str:
         return f"<Post(id={self.id}, title='{self.title[:30]}...')>"

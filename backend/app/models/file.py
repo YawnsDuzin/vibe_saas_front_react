@@ -37,6 +37,7 @@ class File(Base):
     # 관계
     uploader_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     uploader = relationship("User", backref="uploaded_files")
+    post_files = relationship("PostFile", back_populates="file", cascade="all, delete-orphan")
 
     # 타임스탬프
     created_at = Column(DateTime, default=datetime.utcnow)

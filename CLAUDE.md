@@ -151,11 +151,19 @@ JWT tokens with access/refresh pattern:
 All API routes under `/api/v1/`:
 - `/auth` - Login, register, token refresh, current user
 - `/users` - User management (admin only for list/delete)
-- `/posts` - Posts and comments CRUD
+- `/posts` - Posts and comments CRUD (supports file attachments)
 - `/dashboard` - Statistics and recent activity
 - `/theme` - User theme settings
 - `/menu` - Dynamic menu structure
 - `/files` - File upload and management (supports multiple storage backends)
+
+### Post-File Attachment
+
+Posts can have multiple file attachments through the `PostFile` association table:
+- Create post with `file_ids` array to attach files
+- Update post with `file_ids` to modify attachments
+- Files are returned in `files` array in post responses
+- Only the uploader can attach their own files to posts
 
 ### Frontend Routes
 

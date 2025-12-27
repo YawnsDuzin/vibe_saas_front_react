@@ -205,9 +205,10 @@ def get_posts(
         include_unpublished=include_unpublished
     )
 
-    # 댓글 수 추가
+    # 댓글 수 및 파일 추가
     items = []
     for post in posts:
+        files = post_service.get_post_files(post.id)
         post_dict = {
             "id": post.id,
             "title": post.title,
@@ -220,7 +221,8 @@ def get_posts(
             "updated_at": post.updated_at,
             "author": post.author,
             "category": post.category,
-            "comment_count": post_service.get_comment_count(post.id)
+            "comment_count": post_service.get_comment_count(post.id),
+            "files": files
         }
         items.append(post_dict)
 
@@ -261,6 +263,7 @@ def create_post(
     """
     post_service = PostService(db)
     post = post_service.create_post(post_data, current_user.id)
+    files = post_service.get_post_files(post.id)
 
     return {
         "id": post.id,
@@ -274,7 +277,8 @@ def create_post(
         "updated_at": post.updated_at,
         "author": post.author,
         "category": post.category,
-        "comment_count": 0
+        "comment_count": 0,
+        "files": files
     }
 
 
@@ -324,6 +328,7 @@ def get_post(
 
     # 조회수 증가
     post_service.increment_view_count(post_id)
+    files = post_service.get_post_files(post_id)
 
     return {
         "id": post.id,
@@ -337,7 +342,8 @@ def get_post(
         "updated_at": post.updated_at,
         "author": post.author,
         "category": post.category,
-        "comment_count": post_service.get_comment_count(post_id)
+        "comment_count": post_service.get_comment_count(post_id),
+        "files": files
     }
 
 
@@ -371,6 +377,7 @@ def update_post(
     """
     post_service = PostService(db)
     post = post_service.update_post(post_id, post_data, current_user)
+    files = post_service.get_post_files(post_id)
 
     return {
         "id": post.id,
@@ -384,7 +391,8 @@ def update_post(
         "updated_at": post.updated_at,
         "author": post.author,
         "category": post.category,
-        "comment_count": post_service.get_comment_count(post_id)
+        "comment_count": post_service.get_comment_count(post_id),
+        "files": files
     }
 
 

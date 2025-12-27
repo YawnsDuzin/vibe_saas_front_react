@@ -497,6 +497,9 @@ export default function MyFilesPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>파일 상세</DialogTitle>
+            <DialogDescription>
+              파일의 상세 정보를 확인합니다.
+            </DialogDescription>
           </DialogHeader>
           {selectedFile && (
             <div className="grid md:grid-cols-2 gap-6">

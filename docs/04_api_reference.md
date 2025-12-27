@@ -186,7 +186,8 @@ password: string
     "title": "string (1-200자)",
     "content": "string",
     "category_id": "integer (optional)",
-    "is_published": "boolean (default: true)"
+    "is_published": "boolean (default: true)",
+    "file_ids": "integer[] (optional, 첨부할 파일 ID 목록)"
 }
 ```
 
@@ -213,9 +214,12 @@ password: string
     "content": "string (optional)",
     "category_id": "integer (optional)",
     "is_published": "boolean (optional)",
-    "is_pinned": "boolean (optional)"
+    "is_pinned": "boolean (optional)",
+    "file_ids": "integer[] (optional, 첨부 파일 목록 업데이트)"
 }
 ```
+
+**Note:** `file_ids`를 전달하면 기존 첨부 파일이 모두 제거되고 새 목록으로 대체됩니다.
 
 ---
 
@@ -595,7 +599,8 @@ password: string
     "updated_at": "datetime | null",
     "author": "AuthorInfo",
     "category": "CategoryResponse | null",
-    "comment_count": "integer"
+    "comment_count": "integer",
+    "files": "FileResponse[] (첨부된 파일 목록)"
 }
 ```
 

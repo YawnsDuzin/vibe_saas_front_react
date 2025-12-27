@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Trash2, MessageSquare, Send } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MessageSquare, Send, Image, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { postsApi } from '@/lib/api';
+import { postsApi, toAbsoluteUrl } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { Post, Comment } from '@/types';
 
@@ -157,10 +157,47 @@ export default function PostDetailPage() {
             · 조회 {post.view_count}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
             {post.content}
           </div>
+
+          {/* 첨부 이미지 */}
+          {post.files && post.files.length > 0 && (
+            <div className="space-y-3">
+              <Separator />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Image className="h-4 w-4" />
+                첨부 이미지 ({post.files.length})
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {post.files.map((file) => (
+                  <a
+                    key={file.id}
+                    href={toAbsoluteUrl(file.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative block rounded-lg overflow-hidden border bg-muted hover:border-primary transition-colors"
+                  >
+                    {file.is_image ? (
+                      <img
+                        src={toAbsoluteUrl(file.url)}
+                        alt={file.alt_text || file.filename}
+                        className="w-full h-32 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-32 flex items-center justify-center">
+                        <Download className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                      {file.filename}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

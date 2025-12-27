@@ -82,6 +82,7 @@ export interface Post {
   author: AuthorInfo;
   category: Category | null;
   comment_count: number;
+  files: FileResponse[];
 }
 
 export interface PostCreate {
@@ -89,6 +90,7 @@ export interface PostCreate {
   content: string;
   category_id?: number;
   is_published?: boolean;
+  file_ids?: number[];
 }
 
 export interface PostUpdate {
@@ -97,6 +99,7 @@ export interface PostUpdate {
   category_id?: number;
   is_published?: boolean;
   is_pinned?: boolean;
+  file_ids?: number[];
 }
 
 export interface PostListResponse {

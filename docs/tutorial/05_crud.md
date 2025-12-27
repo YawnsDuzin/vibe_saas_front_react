@@ -11,6 +11,7 @@
 5. [Update (수정)](#update-수정)
 6. [Delete (삭제)](#delete-삭제)
 7. [페이지네이션](#페이지네이션)
+8. [파일 첨부 연결](#파일-첨부-연결)
 
 ---
 
@@ -595,6 +596,148 @@ def get_posts_cursor(
         next_cursor = None
 
     return posts, next_cursor
+```
+
+---
+
+## 파일 첨부 연결
+
+게시글에 파일을 첨부하는 기능은 다대다(Many-to-Many) 관계를 사용합니다.
+
+### 연결 모델 (app/models/post_file.py)
+
+```python
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+class PostFile(Base):
+    """게시글-파일 연결 모델"""
+    __tablename__ = "post_files"
+
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"))
+    file_id = Column(Integer, ForeignKey("files.id", ondelete="CASCADE"))
+    display_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # 유니크 제약 조건
+    __table_args__ = (
+        UniqueConstraint('post_id', 'file_id', name='uq_post_file'),
+    )
+
+    # 관계 설정
+    post = relationship("Post", back_populates="post_files")
+    file = relationship("File", back_populates="post_files")
+```
+
+### 스키마에 file_ids 추가
+
+```python
+class PostCreate(BaseModel):
+    title: str
+    content: str
+    category_id: Optional[int] = None
+    is_published: bool = True
+    file_ids: List[int] = []  # 첨부할 파일 ID 목록
+
+class PostUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    file_ids: Optional[List[int]] = None  # 파일 목록 업데이트
+
+class PostResponse(BaseModel):
+    # ... 기존 필드
+    files: List[FileResponse] = []  # 첨부된 파일 목록
+```
+
+### 서비스에서 파일 연결
+
+```python
+def create_post(self, post_data: PostCreate, author_id: int) -> Post:
+    """게시글 생성 (파일 첨부 포함)"""
+    post = Post(
+        title=post_data.title,
+        content=post_data.content,
+        author_id=author_id,
+        # ...
+    )
+
+    self.db.add(post)
+    self.db.flush()  # ID 생성
+
+    # 파일 연결
+    if post_data.file_ids:
+        self._attach_files_to_post(post.id, post_data.file_ids, author_id)
+
+    self.db.commit()
+    self.db.refresh(post)
+    return post
+
+def _attach_files_to_post(
+    self,
+    post_id: int,
+    file_ids: List[int],
+    user_id: int
+) -> None:
+    """게시글에 파일 연결"""
+    for order, file_id in enumerate(file_ids):
+        # 파일 존재 및 소유권 확인
+        file = self.db.query(File).filter(File.id == file_id).first()
+        if not file:
+            raise HTTPException(404, f"파일을 찾을 수 없습니다. (ID: {file_id})")
+
+        if file.uploader_id != user_id:
+            raise HTTPException(403, f"파일에 대한 권한이 없습니다. (ID: {file_id})")
+
+        # 연결 생성
+        post_file = PostFile(
+            post_id=post_id,
+            file_id=file_id,
+            display_order=order
+        )
+        self.db.add(post_file)
+
+def _update_post_files(
+    self,
+    post_id: int,
+    file_ids: List[int],
+    user_id: int
+) -> None:
+    """게시글 파일 목록 업데이트"""
+    # 기존 연결 삭제
+    self.db.query(PostFile).filter(PostFile.post_id == post_id).delete()
+
+    # 새 연결 생성
+    if file_ids:
+        self._attach_files_to_post(post_id, file_ids, user_id)
+```
+
+### 프론트엔드 사용 예시
+
+```typescript
+// 게시글 작성 시 파일 첨부
+const createPost = async () => {
+  // 1. 먼저 파일 업로드
+  const uploadedFiles = await Promise.all(
+    files.map(file => filesApi.upload(file))
+  );
+
+  // 2. 게시글 생성 시 file_ids 포함
+  const post = await postsApi.create({
+    title: "제목",
+    content: "내용",
+    file_ids: uploadedFiles.map(f => f.id)
+  });
+};
+
+// 게시글 수정 시 파일 목록 변경
+const updatePost = async () => {
+  await postsApi.update(postId, {
+    title: "수정된 제목",
+    file_ids: [1, 3, 5]  // 새로운 파일 ID 목록
+  });
+};
 ```
 
 ---

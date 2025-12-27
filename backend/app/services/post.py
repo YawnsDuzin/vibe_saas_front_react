@@ -14,6 +14,8 @@ from fastapi import HTTPException, status
 
 from app.models.post import Post, Comment, Category
 from app.models.user import User
+from app.models.file import File
+from app.models.post_file import PostFile
 from app.schemas.post import PostCreate, PostUpdate, CommentCreate
 from app.utils.helpers import generate_slug
 
@@ -200,7 +202,8 @@ class PostService:
         """
         return self.db.query(Post).options(
             joinedload(Post.author),
-            joinedload(Post.category)
+            joinedload(Post.category),
+            joinedload(Post.post_files).joinedload(PostFile.file)
         ).filter(Post.id == post_id).first()
 
     def get_post_by_slug(self, slug: str) -> Optional[Post]:
@@ -215,7 +218,8 @@ class PostService:
         """
         return self.db.query(Post).options(
             joinedload(Post.author),
-            joinedload(Post.category)
+            joinedload(Post.category),
+            joinedload(Post.post_files).joinedload(PostFile.file)
         ).filter(Post.slug == slug).first()
 
     def get_posts(
@@ -298,6 +302,10 @@ class PostService:
         # 실제 슬러그로 업데이트 (ID 포함)
         post.slug = generate_slug(post_data.title, post.id)
 
+        # 파일 연결
+        if post_data.file_ids:
+            self._attach_files_to_post(post.id, post_data.file_ids, author_id)
+
         self.db.commit()
         self.db.refresh(post)
 
@@ -354,6 +362,10 @@ class PostService:
 
         if post_data.is_pinned is not None:
             post.is_pinned = post_data.is_pinned
+
+        # 파일 연결 업데이트
+        if post_data.file_ids is not None:
+            self._update_post_files(post_id, post_data.file_ids, user.id)
 
         self.db.commit()
         self.db.refresh(post)
@@ -524,3 +536,84 @@ class PostService:
             Comment.post_id == post_id,
             Comment.is_active == True
         ).scalar()
+
+    # ===========================================
+    # File Attachment Methods
+    # ===========================================
+
+    def _attach_files_to_post(
+        self,
+        post_id: int,
+        file_ids: List[int],
+        user_id: int
+    ) -> None:
+        """
+        게시글에 파일을 연결합니다.
+
+        Args:
+            post_id: 게시글 ID
+            file_ids: 파일 ID 목록
+            user_id: 요청 사용자 ID
+        """
+        for order, file_id in enumerate(file_ids):
+            # 파일 존재 및 소유권 확인
+            file = self.db.query(File).filter(File.id == file_id).first()
+            if not file:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"파일을 찾을 수 없습니다. (ID: {file_id})"
+                )
+
+            # 소유권 확인 (자신의 파일만 첨부 가능)
+            if file.uploader_id != user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"파일에 대한 권한이 없습니다. (ID: {file_id})"
+                )
+
+            # 연결 생성
+            post_file = PostFile(
+                post_id=post_id,
+                file_id=file_id,
+                display_order=order
+            )
+            self.db.add(post_file)
+
+    def _update_post_files(
+        self,
+        post_id: int,
+        file_ids: List[int],
+        user_id: int
+    ) -> None:
+        """
+        게시글의 파일 연결을 업데이트합니다.
+
+        기존 연결을 모두 삭제하고 새로운 파일 목록으로 재연결합니다.
+
+        Args:
+            post_id: 게시글 ID
+            file_ids: 새 파일 ID 목록
+            user_id: 요청 사용자 ID
+        """
+        # 기존 연결 삭제
+        self.db.query(PostFile).filter(PostFile.post_id == post_id).delete()
+
+        # 새 연결 생성
+        if file_ids:
+            self._attach_files_to_post(post_id, file_ids, user_id)
+
+    def get_post_files(self, post_id: int) -> List[File]:
+        """
+        게시글에 첨부된 파일 목록을 반환합니다.
+
+        Args:
+            post_id: 게시글 ID
+
+        Returns:
+            List[File]: 파일 목록
+        """
+        post_files = self.db.query(PostFile).filter(
+            PostFile.post_id == post_id
+        ).order_by(PostFile.display_order).all()
+
+        return [pf.file for pf in post_files]

@@ -45,6 +45,8 @@ cp .env.example .env
 
 # 백엔드 서버 실행
 uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
 ```
 
 ### 프론트엔드

@@ -21,7 +21,8 @@ FastAPI_Tutorial/
 │   │   ├── post.py               #       게시글/댓글 모델
 │   │   ├── theme.py              #       테마 설정 모델
 │   │   ├── menu.py               #       메뉴 모델
-│   │   └── file.py               #       파일 모델
+│   │   ├── file.py               #       파일 모델
+│   │   └── post_file.py          #       게시글-파일 연결 모델
 │   │
 │   ├── schemas/                  #    📋 Pydantic 스키마
 │   │   ├── __init__.py

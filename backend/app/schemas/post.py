@@ -9,6 +9,8 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
+from app.schemas.file import FileResponse
+
 
 # ===========================================
 # Category Schemas
@@ -76,7 +78,7 @@ class PostCreate(PostBase):
 
     author_id는 인증된 사용자에서 자동으로 설정됩니다.
     """
-    pass
+    file_ids: List[int] = Field(default=[], description="첨부 파일 ID 목록")
 
 
 class PostUpdate(BaseModel):
@@ -90,6 +92,7 @@ class PostUpdate(BaseModel):
     category_id: Optional[int] = Field(None, description="카테고리 ID")
     is_published: Optional[bool] = Field(None, description="공개 여부")
     is_pinned: Optional[bool] = Field(None, description="상단 고정")
+    file_ids: Optional[List[int]] = Field(None, description="첨부 파일 ID 목록")
 
 
 class AuthorInfo(BaseModel):
@@ -119,6 +122,7 @@ class PostResponse(BaseModel):
     author: AuthorInfo = Field(..., description="작성자 정보")
     category: Optional[CategoryResponse] = Field(None, description="카테고리")
     comment_count: int = Field(default=0, description="댓글 수")
+    files: List[FileResponse] = Field(default=[], description="첨부 파일 목록")
 
     model_config = {
         "from_attributes": True,
@@ -143,7 +147,8 @@ class PostResponse(BaseModel):
                     "name": "공지사항",
                     "slug": "notices"
                 },
-                "comment_count": 5
+                "comment_count": 5,
+                "files": []
             }
         }
     }
